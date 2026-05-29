@@ -1,0 +1,48 @@
+# docker-compose.yml — Run Prometheus with Docker Compose
+#
+# This file does the same thing as the commands in 01-docker-cli.md,
+# but in a single file you can spin up with one command.
+#
+# Run:   docker compose up -d
+# Stop:  docker compose down
+# Wipe:  docker compose down -v   (also deletes the named volume)
+
+services:
+
+  prometheus:
+    # The official Prometheus Docker image from Docker Hub.
+    # Pinned to a specific version so your setup doesn't break on surprise upgrades.
+    image: prom/prometheus:v2.51.0
+
+    # Container name — same as --name prometheus in docker run.
+    container_name: prometheus
+
+    # Restart policy: restart the container automatically if it crashes.
+    restart: unless-stopped
+
+    # Port mapping: host:container — same as -p 9090:9090 in docker run.
+    # After "docker compose up -d", open http://localhost:9090 in your browser.
+    ports:
+      - "9090:9090"
+
+    # Volume mounts — same as -v flags in docker run.
+    volumes:
+      # Mount our local prometheus.yml config file INTO the container.
+      # The ./ means "the same directory as this docker-compose.yml file".
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+      # Named volume for Prometheus data (time-series database).
+      # "promdata" is defined in the top-level volumes: section below.
+      - promdata:/prometheus
+
+    # Override the default command to point at our config file.
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+
+# Named volumes are managed by Docker (not tied to a host path).
+# This avoids permission issues and survives container rebuilds.
+volumes:
+  promdata:

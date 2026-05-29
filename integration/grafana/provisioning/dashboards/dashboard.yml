@@ -1,0 +1,20 @@
+# grafana/provisioning/dashboards/dashboard.yml
+#
+# Grafana Provisioning — Dashboard Provider
+#
+# This file tells Grafana WHERE to look for dashboard JSON files on disk.
+# Grafana will load any .json file it finds in the specified path and
+# make it available as a dashboard — automatically, on every startup.
+
+apiVersion: 1
+
+providers:
+  - name: "default"
+    orgId: 1
+    # The folder name shown in the Grafana Dashboards list
+    folder: "Provisioned"
+    type: file
+    options:
+      # Path INSIDE the container where dashboard JSON files are stored.
+      # We mount our local dashboards/ directory here via docker-compose.yml.
+      path: /var/lib/grafana/dashboards

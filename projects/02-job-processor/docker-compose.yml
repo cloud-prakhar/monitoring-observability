@@ -1,0 +1,22 @@
+# docker-compose.yml — Job Processor
+#
+# Runs only the application. Prometheus and Grafana are in infra/.
+# Prerequisites: infra/ must be running.
+#
+# Start:  docker compose up -d --build
+# Stop:   docker compose down
+
+services:
+
+  job-processor:
+    build: ./app
+    container_name: job-processor
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    external: true

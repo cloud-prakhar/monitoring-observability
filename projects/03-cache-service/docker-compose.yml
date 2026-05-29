@@ -1,0 +1,22 @@
+# docker-compose.yml — Cache Service
+#
+# Runs only the application. Prometheus and Grafana are in infra/.
+# Prerequisites: infra/ must be running.
+#
+# Start:  docker compose up -d --build
+# Stop:   docker compose down
+
+services:
+
+  cache-service:
+    build: ./app
+    container_name: cache-service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    external: true

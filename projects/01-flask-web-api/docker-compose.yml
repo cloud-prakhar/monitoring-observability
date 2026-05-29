@@ -1,0 +1,30 @@
+# docker-compose.yml — Flask Web API
+#
+# This runs ONLY the application. Prometheus and Grafana live in infra/.
+# The app joins the pre-existing 'monitoring' network so Prometheus can scrape it.
+#
+# Prerequisites: infra/ must be running (docker compose up -d from infra/).
+#
+# Start:   docker compose up -d --build
+# Rebuild: docker compose up -d --build   (same command — detects changes)
+# Stop:    docker compose down
+
+services:
+
+  flask-web-api:
+    build: ./app
+    container_name: flask-web-api
+    restart: unless-stopped
+    ports:
+      # Exposes port 8081 on your machine so you can test with curl or a browser.
+      # Prometheus reaches the app via the internal Docker network (no host port needed).
+      - "8081:8081"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    # external: true means "join an existing network named 'monitoring'".
+    # Docker does NOT create this network — infra/ creates it.
+    # Run 'docker network ls' to confirm 'monitoring' exists before starting this.
+    external: true

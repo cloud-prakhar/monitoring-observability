@@ -1,0 +1,61 @@
+# infra/docker-compose.yml
+#
+# Shared monitoring infrastructure: Prometheus + Grafana.
+# Start this ONCE. All three projects connect to the 'monitoring' network it creates.
+#
+# Start:  docker compose up -d
+# Stop:   docker compose down        (keeps volumes — your dashboards survive)
+# Wipe:   docker compose down -v     (deletes volumes — fresh Grafana state)
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      # --web.enable-lifecycle lets you reload config with a POST request
+      # instead of restarting the container. Used in each project's CONNECT.md.
+      - "--web.enable-lifecycle"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafdata:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+volumes:
+  promdata:
+  grafdata:
+
+networks:
+  monitoring:
+    # name: monitoring creates the network with EXACTLY this name.
+    # Without this, Docker would call it "infra_monitoring" and the
+    # external: true reference in each project's Compose file would fail.
+    name: monitoring
+    driver: bridge

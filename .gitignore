@@ -1,0 +1,43 @@
+# Project management files — intentionally local-only, never committed
+CLAUDE.md
+memory.md
+TODO.md
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.*
+
+# Docker volume data (if mapped locally)
+prometheus-data/
+grafana-data/
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

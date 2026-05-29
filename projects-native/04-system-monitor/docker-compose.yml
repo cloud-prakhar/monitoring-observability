@@ -1,0 +1,29 @@
+# projects-native/04-system-monitor/docker-compose.yml
+#
+# Use this file when you want to run the System Monitor app in Docker
+# while connecting it to the shared infra (Prometheus + Grafana).
+#
+# Prerequisite: infra must be running first.
+#   cd infra && docker compose up -d
+#
+# Start:  docker compose up -d --build
+# Stop:   docker compose down
+
+services:
+  system-monitor:
+    build: ./app
+    container_name: system-monitor
+    ports:
+      - "8084:8084"
+    # The container reads /proc from the HOST, not its own namespaced view.
+    # pid: host gives access to real host process info; the volume mount
+    # exposes the host's /proc filesystem inside the container at /host/proc.
+    # app.py reads /proc directly, so we overlay it here.
+    volumes:
+      - /proc:/proc:ro
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    external: true

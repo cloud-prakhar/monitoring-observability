@@ -1,0 +1,62 @@
+# docker-compose.yml — Run Prometheus + Grafana together
+#
+# This is the integration setup. Both containers run on the same Docker network
+# so Grafana can reach Prometheus by service name (http://prometheus:9090).
+#
+# Run:   docker compose up -d
+# Stop:  docker compose down
+# Wipe:  docker compose down -v
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    # Both services must be on the same network for DNS to work.
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafdata:/var/lib/grafana
+      # Mount provisioning config so Grafana auto-registers Prometheus on startup.
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      # Mount dashboard JSON files to the path the provider config points to.
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    # depends_on means Compose starts Prometheus BEFORE Grafana.
+    # Note: this is "start order" only — it does not wait for Prometheus to be ready.
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+# Named volumes — survive container restarts and rebuilds.
+volumes:
+  promdata:
+  grafdata:
+
+# The "monitoring" network lets containers reach each other by service name.
+# Without this shared network, Grafana would have no route to Prometheus.
+networks:
+  monitoring:
+    driver: bridge

@@ -1,0 +1,66 @@
+# infra/prometheus.yml
+#
+# This is the shared Prometheus configuration for all three projects.
+# Prometheus and Grafana run here as the central monitoring infrastructure.
+#
+# HOW TO ADD A PROJECT:
+#   1. Start the project (docker compose up -d --build in the project directory)
+#   2. Uncomment that project's job block below
+#   3. Reload Prometheus: curl -X POST http://localhost:9090/-/reload
+#   4. Verify at http://localhost:9090/targets (the new target should show UP)
+
+global:
+  scrape_interval: 15s        # collect metrics every 15 seconds
+  evaluation_interval: 15s    # evaluate alerting rules every 15 seconds
+
+scrape_configs:
+
+  # Prometheus scrapes its own internal metrics — always on.
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ---------------------------------------------------------------------------
+  # Project 1 — Flask Web API (port 8081)
+  # Uncomment after: cd projects/01-flask-web-api && docker compose up -d --build
+  # ---------------------------------------------------------------------------
+  # - job_name: "flask-web-api"
+  #   static_configs:
+  #     - targets: ["flask-web-api:8081"]
+
+  # ---------------------------------------------------------------------------
+  # Project 2 — Job Processor (port 8082)
+  # Uncomment after: cd projects/02-job-processor && docker compose up -d --build
+  # ---------------------------------------------------------------------------
+  # - job_name: "job-processor"
+  #   static_configs:
+  #     - targets: ["job-processor:8082"]
+
+  # ---------------------------------------------------------------------------
+  # Project 3 — Cache Service (port 8083)
+  # Uncomment after: cd projects/03-cache-service && docker compose up -d --build
+  # ---------------------------------------------------------------------------
+  # - job_name: "cache-service"
+  #   static_configs:
+  #     - targets: ["cache-service:8083"]
+
+  # ---------------------------------------------------------------------------
+  # Project 4 — System Monitor (port 8084)
+  # Native path:  cd projects-native/04-system-monitor/app && python app.py
+  #   target → localhost:8084
+  # Docker path:  cd projects-native/04-system-monitor && docker compose up -d --build
+  #   target → system-monitor:8084
+  # ---------------------------------------------------------------------------
+  # - job_name: "system-monitor"
+  #   static_configs:
+  #     - targets: ["system-monitor:8084"]   # Docker path
+  #   # - targets: ["localhost:8084"]        # Native path (replace line above)
+
+  # ---------------------------------------------------------------------------
+  # Project 5 — URL Health Checker (port 8085)
+  # Native path:  cd projects-native/05-url-health-checker/app && python app.py
+  # Docker path:  uses network_mode: host → target is always localhost:8085
+  # ---------------------------------------------------------------------------
+  # - job_name: "url-health-checker"
+  #   static_configs:
+  #     - targets: ["localhost:8085"]

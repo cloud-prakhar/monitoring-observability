@@ -1,0 +1,32 @@
+# grafana/provisioning/datasources/prometheus.yml
+#
+# Grafana Provisioning — Data Source
+#
+# This file tells Grafana to automatically register Prometheus as a data source
+# when the container starts. Without this file, you would have to click through
+# Connections → Data sources → Add new data source → Prometheus every time.
+#
+# Grafana reads files in /etc/grafana/provisioning/datasources/ on startup.
+# We mount this file there via the volume in docker-compose.yml.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    # "prometheus" matches the built-in Grafana plugin for Prometheus.
+    type: prometheus
+    # "default: true" makes this the pre-selected data source in the query editor.
+    isDefault: true
+    access: proxy
+    # KEY POINT: We use "http://prometheus:9090", NOT "http://localhost:9090".
+    #
+    # Why? Because Grafana and Prometheus are separate containers on the same
+    # Docker network. Inside a container, "localhost" means THAT container itself
+    # — not the host machine, and not another container.
+    #
+    # Docker's built-in DNS resolves service names to container IPs on the same
+    # network. So "prometheus" resolves to the Prometheus container's internal IP.
+    #
+    # This is the #1 beginner mistake: using localhost when you mean another container.
+    url: http://prometheus:9090
+    editable: true

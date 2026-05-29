@@ -1,0 +1,44 @@
+# docker-compose.yml — Run Grafana with Docker Compose
+#
+# This file does the same thing as the commands in 01-docker-cli.md,
+# but in a single file you can spin up with one command.
+#
+# Run:   docker compose up -d
+# Stop:  docker compose down
+# Wipe:  docker compose down -v   (also deletes the named volume)
+
+services:
+
+  grafana:
+    # The official Grafana OSS Docker image.
+    # Pinned to a specific version for stability.
+    image: grafana/grafana:10.4.2
+
+    # Container name — same as --name grafana in docker run.
+    container_name: grafana
+
+    # Restart policy: restart the container automatically if it crashes.
+    restart: unless-stopped
+
+    # Port mapping: host:container — same as -p 3000:3000 in docker run.
+    # After "docker compose up -d", open http://localhost:3000 in your browser.
+    ports:
+      - "3000:3000"
+
+    # Volume mounts — same as -v flags in docker run.
+    volumes:
+      # Named volume for Grafana data (dashboards, users, settings, etc.)
+      - grafdata:/var/lib/grafana
+
+    # Environment variables — configure Grafana without editing config files.
+    environment:
+      # Default admin username. You can leave this as "admin".
+      - GF_SECURITY_ADMIN_USER=admin
+      # Default admin password. Grafana will force a change on first login.
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+# Named volumes are managed by Docker (not tied to a host path).
+# Grafana runs as UID 472 inside the container — named volumes avoid
+# the permission errors you'd get with a raw host-directory mount.
+volumes:
+  grafdata:

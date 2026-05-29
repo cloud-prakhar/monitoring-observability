@@ -1,0 +1,32 @@
+# projects-native/05-url-health-checker/docker-compose.yml
+#
+# Use this file when you want to run the URL Health Checker in Docker
+# while connecting it to the shared infra (Prometheus + Grafana).
+#
+# NOTE: The default target list includes localhost:8081-8084. When running
+# in Docker, "localhost" inside the container is the container itself, not
+# the host. Those checks will show DOWN unless you use host networking or
+# replace localhost with the actual container names (see CONNECT.md).
+#
+# Prerequisite: infra must be running first.
+#   cd infra && docker compose up -d
+#
+# Start:  docker compose up -d --build
+# Stop:   docker compose down
+
+services:
+  url-health-checker:
+    build: ./app
+    container_name: url-health-checker
+    ports:
+      - "8085:8085"
+    # network_mode: host lets the container reach localhost:8081-8084 directly.
+    # This is the simplest option for development. Remove the 'networks' key
+    # below and add the prometheus scrape job with target "localhost:8085" instead.
+    network_mode: host
+
+# When using network_mode: host, Docker ignores the 'networks' key.
+# If you remove network_mode: host, uncomment these two blocks instead:
+# networks:
+#   monitoring:
+#     external: true

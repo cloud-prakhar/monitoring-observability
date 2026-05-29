@@ -1,0 +1,29 @@
+# prometheus.yml — Prometheus configuration for the integration setup
+#
+# This is identical in structure to prometheus-setup/prometheus.yml.
+# The only difference is the context: Prometheus runs alongside Grafana
+# on the same Docker network, so we could add Grafana as a target here
+# if Grafana exposed metrics (it does — see the optional job below).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  # Prometheus scrapes itself as always.
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+          - "localhost:9090"
+
+  # Optional: scrape Grafana's own metrics.
+  # Grafana exposes metrics at port 3000 /metrics by default (in newer versions).
+  # Uncomment this block if you want to monitor Grafana itself.
+  #
+  # - job_name: "grafana"
+  #   static_configs:
+  #     - targets:
+  #         # "grafana" is the Docker service name — Prometheus resolves it
+  #         # to the Grafana container's IP on the shared 'monitoring' network.
+  #         - "grafana:3000"

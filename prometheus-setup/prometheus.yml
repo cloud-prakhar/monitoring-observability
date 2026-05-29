@@ -1,0 +1,45 @@
+# prometheus.yml — Prometheus configuration file
+#
+# Prometheus reads this file on startup to know:
+#   1. How often to collect metrics (scrape_interval)
+#   2. Which targets to collect metrics FROM (scrape_configs)
+#
+# This file is mounted into the container at /etc/prometheus/prometheus.yml
+
+# ---------------------------------------------------------------------------
+# global — settings that apply to ALL scrape jobs unless overridden
+# ---------------------------------------------------------------------------
+global:
+  # scrape_interval: how often Prometheus asks each target for metrics.
+  # "15s" means every 15 seconds. Good default for learning; production
+  # setups often use 30s–60s to reduce load.
+  scrape_interval: 15s
+
+  # evaluation_interval: how often Prometheus evaluates alerting rules.
+  # Not needed yet (we have no rules), but good to know it exists.
+  evaluation_interval: 15s
+
+# ---------------------------------------------------------------------------
+# scrape_configs — list of "jobs" (groups of targets to scrape)
+#
+# Each job has:
+#   job_name  : a label added to every metric collected by this job
+#   targets   : the host:port addresses Prometheus will scrape
+#
+# Prometheus scrapes the path /metrics on each target by default.
+# ---------------------------------------------------------------------------
+scrape_configs:
+
+  # -------------------------------------------------------------------------
+  # job: prometheus
+  #
+  # Prometheus scrapes ITSELF by default — it exposes its own internal metrics
+  # (e.g. how many scrapes succeeded, memory usage, etc.) at :9090/metrics.
+  # This is how you can monitor Prometheus with Prometheus!
+  # -------------------------------------------------------------------------
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+          # "localhost:9090" works here because this is evaluated INSIDE the
+          # Prometheus container — localhost refers to the container itself.
+          - "localhost:9090"
