@@ -22,7 +22,7 @@ If you see `aarch64` (ARM), replace `linux-amd64` with `linux-arm64` in the down
 ## Step 2 — Download and extract Prometheus
 
 ```bash
-PROM_VERSION="2.51.0"
+PROM_VERSION="3.12.0"
 
 cd /tmp
 wget https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz
@@ -30,8 +30,8 @@ wget https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}
 
 Expected output (last few lines):
 ```
-Saving to: 'prometheus-2.51.0.linux-amd64.tar.gz'
-prometheus-2.51.0.linux-amd64.tar.gz   100%[====================================>]  98.65M  ...
+Saving to: 'prometheus-3.12.0.linux-amd64.tar.gz'
+prometheus-3.12.0.linux-amd64.tar.gz   100%[====================================>]  145.70M  ...
 ```
 
 Extract it:
@@ -43,8 +43,13 @@ ls
 
 Expected output:
 ```
-console_libraries  consoles  LICENSE  NOTICE  prometheus  prometheus.yml  promtool
+LICENSE  NOTICE  prometheus  prometheus.yml  promtool
 ```
+
+> **Note (Prometheus 3.x):** Starting with Prometheus 3.0, the web console templates
+> (`consoles/` and `console_libraries/`) are **no longer bundled** in the tarball. The
+> redesigned built-in UI replaces them, so you no longer copy those directories or pass
+> the `--web.console.*` flags. If you are following an older 2.x guide, ignore those steps.
 
 ---
 
@@ -61,7 +66,7 @@ prometheus --version
 
 Expected output:
 ```
-prometheus, version 2.51.0 (branch: HEAD, ...)
+prometheus, version 3.12.0 (branch: HEAD, ...)
 ```
 
 ---
@@ -70,10 +75,10 @@ prometheus, version 2.51.0 (branch: HEAD, ...)
 
 ```bash
 sudo mkdir -p /etc/prometheus /var/lib/prometheus
-
-# Copy the web console assets (needed for the Prometheus UI)
-sudo cp -r consoles/ console_libraries/ /etc/prometheus/
 ```
+
+> On Prometheus 2.x you also copied `consoles/` and `console_libraries/` here. Prometheus
+> 3.x no longer ships them, so there is nothing to copy — the directories above are all you need.
 
 ---
 
@@ -126,9 +131,7 @@ Before setting up a service, run it in the foreground to make sure it starts cor
 prometheus \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/var/lib/prometheus/ \
-  --web.enable-lifecycle \
-  --web.console.templates=/etc/prometheus/consoles \
-  --web.console.libraries=/etc/prometheus/console_libraries
+  --web.enable-lifecycle
 ```
 
 Expected output (last few lines):
@@ -177,9 +180,7 @@ User=prometheus
 ExecStart=/usr/local/bin/prometheus \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/var/lib/prometheus/ \
-  --web.enable-lifecycle \
-  --web.console.templates=/etc/prometheus/consoles \
-  --web.console.libraries=/etc/prometheus/console_libraries
+  --web.enable-lifecycle
 Restart=on-failure
 
 [Install]
@@ -217,8 +218,6 @@ nohup prometheus \
   --config.file=/etc/prometheus/prometheus.yml \
   --storage.tsdb.path=/var/lib/prometheus/ \
   --web.enable-lifecycle \
-  --web.console.templates=/etc/prometheus/consoles \
-  --web.console.libraries=/etc/prometheus/console_libraries \
   > /var/log/prometheus.log 2>&1 &
 
 echo "Prometheus PID: $!"
@@ -282,3 +281,9 @@ Kill the process using that port or change the Prometheus port with `--web.liste
 
 **Config reload returns 403**
 The `--web.enable-lifecycle` flag is not in the startup command. Check the service file or the manual command and add it.
+
+**Prometheus 3.x fails to start with `opening console templates ... no such file or directory`**
+You are passing `--web.console.templates` / `--web.console.libraries` flags left over from a
+Prometheus 2.x guide. Version 3.x no longer ships those directories, so the flags point at
+nothing and startup aborts. Remove both flags from your startup command or systemd unit (this
+guide already omits them).
