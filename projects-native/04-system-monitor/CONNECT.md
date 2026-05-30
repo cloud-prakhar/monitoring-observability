@@ -217,6 +217,9 @@ system_load_average{job="system-monitor"}
 
 ## Clean up
 
+> For a complete teardown (venv, image, scrape job, and dashboard too), see
+> **[CLEANUP.md](CLEANUP.md)**. Quick version:
+
 **Native:**
 ```bash
 # Stop the app

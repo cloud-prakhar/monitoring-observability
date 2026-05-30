@@ -28,6 +28,10 @@ Both paths end up with the same result: Prometheus on port 9090, Grafana on port
 Once done, follow `projects-native/04-system-monitor/CONNECT.md` and
 `projects-native/05-url-health-checker/CONNECT.md` to connect the Python projects.
 
+When you're finished and want your machine back to a clean state, run
+**[04-cleanup.md](04-cleanup.md)** — it fully uninstalls both services, users, binaries, config,
+and data.
+
 ---
 
 ## Prerequisites

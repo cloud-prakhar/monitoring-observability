@@ -71,11 +71,30 @@ prometheus, version 3.12.0 (branch: HEAD, ...)
 
 ---
 
-## Step 4 — Create config directories
+## Step 4 — Create config and data directories
 
 ```bash
 sudo mkdir -p /etc/prometheus /var/lib/prometheus
 ```
+
+**Why these two directories?** They follow the standard Linux split between *config* and *state*:
+
+- `/etc/prometheus` — holds the configuration file (`prometheus.yml`). On Linux, `/etc` is the
+  conventional home for system-wide config, so this is where Prometheus expects to look.
+- `/var/lib/prometheus` — holds the time-series database (the metrics Prometheus collects).
+  `/var/lib` is the conventional home for application *data that changes at runtime*, so keeping
+  data here (separate from config) means you can wipe metrics without touching your config.
+
+Because we created them with `sudo`, both directories are currently owned by `root`. The manual
+test in Step 6 runs Prometheus as **your** user, which needs to write to the data directory — so
+give yourself ownership for now (Step 8a hands it to a dedicated service user later):
+
+```bash
+sudo chown -R $(whoami):$(whoami) /etc/prometheus /var/lib/prometheus
+```
+
+> Without this `chown`, Step 6 fails with `permission denied` the moment Prometheus tries to
+> create its database under `/var/lib/prometheus`.
 
 > On Prometheus 2.x you also copied `consoles/` and `console_libraries/` here. Prometheus
 > 3.x no longer ships them, so there is nothing to copy — the directories above are all you need.
@@ -162,9 +181,27 @@ ps --no-headers -o comm 1
 
 ## Step 8a — Create a systemd service (recommended if systemd is available)
 
-Create a dedicated system user for Prometheus:
+**Why a systemd service at all?** Running Prometheus by hand (Step 6) stops the moment you close
+the terminal or reboot WSL2. A systemd service fixes that: it starts Prometheus automatically on
+boot, restarts it if it crashes (`Restart=on-failure`), runs it in the background, and gives you
+one consistent way to start/stop/inspect it (`systemctl start|stop|status prometheus`).
+
+**Why a dedicated `prometheus` user?** This is the *principle of least privilege*. If Prometheus
+ran as `root` and was ever compromised (or simply had a bug), it could read or modify anything on
+the system. A locked-down account limits the blast radius to only Prometheus' own files. The flags
+make that account safe:
+
+- `--no-create-home` — Prometheus never needs a home directory, so don't make one.
+- `--shell /bin/false` — nobody can log in as this user; it exists only to run the process.
+
 ```bash
 sudo useradd --no-create-home --shell /bin/false prometheus
+```
+
+Now hand ownership of the config and data directories to that user, so the service (which runs
+**as** `prometheus`) can read its config and write its database:
+
+```bash
 sudo chown -R prometheus:prometheus /var/lib/prometheus /etc/prometheus
 ```
 

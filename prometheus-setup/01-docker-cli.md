@@ -47,12 +47,14 @@ docker run -d \
   -p 9090:9090 \
   -v "$(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
   -v promdata:/prometheus \
-  prom/prometheus:v2.51.0 \
+  prom/prometheus:v3.12.0 \
   --config.file=/etc/prometheus/prometheus.yml \
-  --storage.tsdb.path=/prometheus \
-  --web.console.libraries=/usr/share/prometheus/console_libraries \
-  --web.console.templates=/usr/share/prometheus/consoles
+  --storage.tsdb.path=/prometheus
 ```
+
+> **Prometheus 3.x note:** Older 2.x guides append `--web.console.libraries` and
+> `--web.console.templates` here. Prometheus 3.x removed the bundled web consoles,
+> so those flags now point at nothing and the container exits on startup. Leave them out.
 
 **What each flag does:**
 
@@ -64,7 +66,7 @@ docker run -d \
 | `-v $(pwd)/prometheus.yml:...` | Mounts the config file from your current directory into the container |
 | `:ro` | Read-only — the container can read the config but not modify it |
 | `-v promdata:/prometheus` | Mounts the named volume at the path where Prometheus stores data |
-| `prom/prometheus:v2.51.0` | The Docker image to use (official Prometheus, pinned version) |
+| `prom/prometheus:v3.12.0` | The Docker image to use (official Prometheus, pinned version) |
 | `--config.file=...` | Tells Prometheus where its config file is (inside the container) |
 | `--storage.tsdb.path=...` | Where to write the time-series database |
 
@@ -88,7 +90,7 @@ docker ps
 **Expected output** (abbreviated):
 ```
 CONTAINER ID   IMAGE                       COMMAND                  PORTS                    NAMES
-a3f7c2e1b4d5   prom/prometheus:v2.51.0    "/bin/prometheus ..."    0.0.0.0:9090->9090/tcp   prometheus
+a3f7c2e1b4d5   prom/prometheus:v3.12.0    "/bin/prometheus ..."    0.0.0.0:9090->9090/tcp   prometheus
 ```
 
 If the container is not in the list, it may have crashed — see the troubleshooting step below.

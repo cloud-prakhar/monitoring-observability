@@ -45,7 +45,7 @@ docker run -d \
   -v grafdata:/var/lib/grafana \
   -e GF_SECURITY_ADMIN_USER=admin \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
-  grafana/grafana:10.4.2
+  grafana/grafana:13.0.1
 ```
 
 **What each flag does:**
@@ -58,7 +58,7 @@ docker run -d \
 | `-v grafdata:/var/lib/grafana` | Mounts the named volume at Grafana's data directory |
 | `-e GF_SECURITY_ADMIN_USER=admin` | Sets the admin username via environment variable |
 | `-e GF_SECURITY_ADMIN_PASSWORD=admin` | Sets the initial admin password |
-| `grafana/grafana:10.4.2` | Official Grafana OSS image, pinned version |
+| `grafana/grafana:13.0.1` | Official Grafana OSS image, pinned version |
 
 **Expected output:** A long container ID hash.
 
@@ -73,7 +73,7 @@ docker ps
 **Expected output** (abbreviated):
 ```
 CONTAINER ID   IMAGE                  COMMAND     PORTS                    NAMES
-b9e4a1d3c2f6   grafana/grafana:10.4.2  ...        0.0.0.0:3000->3000/tcp   grafana
+b9e4a1d3c2f6   grafana/grafana:13.0.1  ...        0.0.0.0:3000->3000/tcp   grafana
 ```
 
 ---

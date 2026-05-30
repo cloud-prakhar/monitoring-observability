@@ -201,6 +201,9 @@ histogram_quantile(0.99,
 
 ## Clean up
 
+> For a complete teardown (image, scrape job, and dashboard too), see **[CLEANUP.md](CLEANUP.md)**.
+> Quick version:
+
 ```bash
 # Stop the Flask app (infra keeps running):
 docker compose down

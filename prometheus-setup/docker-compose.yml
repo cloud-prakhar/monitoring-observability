@@ -12,7 +12,7 @@ services:
   prometheus:
     # The official Prometheus Docker image from Docker Hub.
     # Pinned to a specific version so your setup doesn't break on surprise upgrades.
-    image: prom/prometheus:v2.51.0
+    image: prom/prometheus:v3.12.0
 
     # Container name — same as --name prometheus in docker run.
     container_name: prometheus
@@ -39,8 +39,8 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-      - "--web.console.templates=/usr/share/prometheus/consoles"
+      # Prometheus 3.x dropped the bundled web consoles, so the old
+      # --web.console.* flags are intentionally absent — they would crash 3.x.
 
 # Named volumes are managed by Docker (not tied to a host path).
 # This avoids permission issues and survives container rebuilds.

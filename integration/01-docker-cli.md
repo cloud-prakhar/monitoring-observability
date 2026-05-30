@@ -101,12 +101,13 @@ docker run -d \
   -p 9090:9090 \
   -v "$(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
   -v promdata:/prometheus \
-  prom/prometheus:v2.51.0 \
+  prom/prometheus:v3.12.0 \
   --config.file=/etc/prometheus/prometheus.yml \
-  --storage.tsdb.path=/prometheus \
-  --web.console.libraries=/usr/share/prometheus/console_libraries \
-  --web.console.templates=/usr/share/prometheus/consoles
+  --storage.tsdb.path=/prometheus
 ```
+
+> **Prometheus 3.x note:** The `--web.console.*` flags from older 2.x guides are
+> omitted on purpose — 3.x no longer ships the web consoles and crashes if you pass them.
 
 New flag vs the standalone setup:
 
@@ -129,7 +130,7 @@ docker run -d \
   -v "$(pwd)/grafana/dashboards:/var/lib/grafana/dashboards:ro" \
   -e GF_SECURITY_ADMIN_USER=admin \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
-  grafana/grafana:10.4.2
+  grafana/grafana:13.0.1
 ```
 
 New flags vs the standalone setup:
@@ -152,8 +153,8 @@ docker ps
 **Expected output:**
 ```
 CONTAINER ID   IMAGE                       PORTS                    NAMES
-xxxxxxxxxxxx   grafana/grafana:10.4.2      0.0.0.0:3000->3000/tcp   grafana
-yyyyyyyyyyyy   prom/prometheus:v2.51.0     0.0.0.0:9090->9090/tcp   prometheus
+xxxxxxxxxxxx   grafana/grafana:13.0.1      0.0.0.0:3000->3000/tcp   grafana
+yyyyyyyyyyyy   prom/prometheus:v3.12.0     0.0.0.0:9090->9090/tcp   prometheus
 ```
 
 ---

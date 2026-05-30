@@ -16,7 +16,7 @@
 | `-v grafdata:/var/lib/grafana` | `volumes: - grafdata:/var/lib/grafana` |
 | `-e GF_SECURITY_ADMIN_USER=admin` | `environment: - GF_SECURITY_ADMIN_USER=admin` |
 | `-e GF_SECURITY_ADMIN_PASSWORD=admin` | `environment: - GF_SECURITY_ADMIN_PASSWORD=admin` |
-| `grafana/grafana:10.4.2` | `image: grafana/grafana:10.4.2` |
+| `grafana/grafana:13.0.1` | `image: grafana/grafana:13.0.1` |
 | (run the command) | `docker compose up -d` |
 
 Open `docker-compose.yml` alongside this file and trace each line to the table above.
@@ -61,7 +61,7 @@ docker compose ps
 **Expected output:**
 ```
 NAME      IMAGE                   COMMAND   SERVICE   STATUS    PORTS
-grafana   grafana/grafana:10.4.2  ...       grafana   running   0.0.0.0:3000->3000/tcp
+grafana   grafana/grafana:13.0.1  ...       grafana   running   0.0.0.0:3000->3000/tcp
 ```
 
 ---

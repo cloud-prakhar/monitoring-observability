@@ -31,7 +31,7 @@ Every flag you typed in `docker run` has a direct equivalent in `docker-compose.
 | `-p 9090:9090` | `ports: - "9090:9090"` |
 | `-v $(pwd)/prometheus.yml:/etc/...` | `volumes: - ./prometheus.yml:/etc/...:ro` |
 | `-v promdata:/prometheus` | `volumes: - promdata:/prometheus` |
-| `prom/prometheus:v2.51.0` | `image: prom/prometheus:v2.51.0` |
+| `prom/prometheus:v3.12.0` | `image: prom/prometheus:v3.12.0` |
 | `--config.file=...` (and other args) | `command:` list |
 | (run the command) | `docker compose up -d` |
 
@@ -86,7 +86,7 @@ docker compose ps
 **Expected output:**
 ```
 NAME         IMAGE                    COMMAND     SERVICE      STATUS    PORTS
-prometheus   prom/prometheus:v2.51.0  ...         prometheus   running   0.0.0.0:9090->9090/tcp
+prometheus   prom/prometheus:v3.12.0  ...         prometheus   running   0.0.0.0:9090->9090/tcp
 ```
 
 ---

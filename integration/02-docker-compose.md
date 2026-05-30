@@ -25,7 +25,7 @@
 | `-v $(pwd)/prometheus.yml:...` | `volumes: - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro` |
 | `-v promdata:/prometheus` | `volumes: - promdata:/prometheus` |
 | `--network monitoring` | `networks: - monitoring` |
-| `prom/prometheus:v2.51.0` | `image: prom/prometheus:v2.51.0` |
+| `prom/prometheus:v3.12.0` | `image: prom/prometheus:v3.12.0` |
 
 ### Grafana service
 
@@ -97,8 +97,8 @@ docker compose ps
 **Expected output:**
 ```
 NAME         IMAGE                    STATUS    PORTS
-grafana      grafana/grafana:10.4.2   running   0.0.0.0:3000->3000/tcp
-prometheus   prom/prometheus:v2.51.0  running   0.0.0.0:9090->9090/tcp
+grafana      grafana/grafana:13.0.1   running   0.0.0.0:3000->3000/tcp
+prometheus   prom/prometheus:v3.12.0  running   0.0.0.0:9090->9090/tcp
 ```
 
 ---

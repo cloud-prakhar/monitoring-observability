@@ -10,7 +10,7 @@
 services:
 
   prometheus:
-    image: prom/prometheus:v2.51.0
+    image: prom/prometheus:v3.12.0
     container_name: prometheus
     restart: unless-stopped
     ports:
@@ -21,14 +21,14 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-      - "--web.console.templates=/usr/share/prometheus/consoles"
+      # Prometheus 3.x dropped the bundled web consoles, so the old
+      # --web.console.* flags are intentionally absent — they would crash 3.x.
     # Both services must be on the same network for DNS to work.
     networks:
       - monitoring
 
   grafana:
-    image: grafana/grafana:10.4.2
+    image: grafana/grafana:13.0.1
     container_name: grafana
     restart: unless-stopped
     ports:

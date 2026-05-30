@@ -10,7 +10,7 @@
 services:
 
   prometheus:
-    image: prom/prometheus:v2.51.0
+    image: prom/prometheus:v3.12.0
     container_name: prometheus
     restart: unless-stopped
     ports:
@@ -24,13 +24,14 @@ services:
       # --web.enable-lifecycle lets you reload config with a POST request
       # instead of restarting the container. Used in each project's CONNECT.md.
       - "--web.enable-lifecycle"
-      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-      - "--web.console.templates=/usr/share/prometheus/consoles"
+      # NOTE: Prometheus 3.x no longer ships the web console templates, so the
+      # old --web.console.libraries / --web.console.templates flags are gone.
+      # Passing them on 3.x makes the container exit on startup.
     networks:
       - monitoring
 
   grafana:
-    image: grafana/grafana:10.4.2
+    image: grafana/grafana:13.0.1
     container_name: grafana
     restart: unless-stopped
     ports:

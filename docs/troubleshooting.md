@@ -149,7 +149,7 @@ Remember to update any URLs or `prometheus.yml` targets accordingly if you chang
 
 ```
 NAME         IMAGE                    STATUS             PORTS
-prometheus   prom/prometheus:v2.51.0  Exited (1) 2s ago
+prometheus   prom/prometheus:v3.12.0  Exited (1) 2s ago
 ```
 
 Or `docker ps` shows nothing because the container stopped immediately.
@@ -876,20 +876,31 @@ scrape_configs:
 ### Validate before running
 
 ```bash
-# Validate prometheus.yml using the Prometheus container itself:
+# Validate prometheus.yml using promtool, which ships inside the Prometheus image.
+# The image's default entrypoint is /bin/prometheus, so override it with --entrypoint
+# to run promtool instead:
 docker run --rm \
   -v "$(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
-  prom/prometheus:v2.51.0 \
-  --config.file=/etc/prometheus/prometheus.yml \
-  --check-config
+  --entrypoint promtool \
+  prom/prometheus:v3.12.0 \
+  check config /etc/prometheus/prometheus.yml
 
 # Validate docker-compose.yml:
 docker compose config
 ```
 
-`--check-config` prints `SUCCESS: 1 rule files found, 0 errors` if the file is valid.
+`promtool check config` prints a `SUCCESS:` line and exits 0 if the file is valid, for example:
+```
+Checking /etc/prometheus/prometheus.yml
+ SUCCESS: 0 rule files found
+```
+If the file is invalid it prints `FAILED:` with the parse error and exits non-zero.
 `docker compose config` dumps the resolved config — if it prints without error, the
 YAML is valid.
+
+> **Why not `prometheus --check-config`?** The `prometheus` binary has no such flag —
+> config validation lives in the separate `promtool` tool. Passing `--check-config` to
+> Prometheus just errors with "unknown flag".
 
 ### Read the parse error carefully
 
@@ -1168,7 +1179,7 @@ err="..."
 
 **Grafana logs — healthy startup:**
 ```
-logger=settings t=... msg="Starting Grafana" version=10.4.2
+logger=settings t=... msg="Starting Grafana" version=13.0.1
 logger=server t=... msg="HTTP Server Listen" address=[::]:3000
 ```
 

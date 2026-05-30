@@ -218,6 +218,9 @@ sum by (url) (rate(url_checks_total{job="url-health-checker", result="error"}[5m
 
 ## Clean up
 
+> For a complete teardown (venv, image, scrape job, and dashboard too), see
+> **[CLEANUP.md](CLEANUP.md)**. Quick version:
+
 **Native:**
 ```bash
 kill $(pgrep -f "python app.py")

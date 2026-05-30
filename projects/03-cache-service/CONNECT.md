@@ -201,6 +201,9 @@ Dashboards → New → Import → upload `projects/03-cache-service/dashboards/c
 
 ## Clean up
 
+> For a complete teardown (image, scrape job, and dashboard too), see **[CLEANUP.md](CLEANUP.md)**.
+> Quick version:
+
 ```bash
 docker compose down
 ```

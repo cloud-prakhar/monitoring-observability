@@ -43,7 +43,7 @@ apt-cache policy grafana | head -5
 
 Expected output includes a line like:
 ```
-  Candidate: 10.x.x
+  Candidate: 13.x.x
 ```
 
 ---
@@ -56,7 +56,7 @@ sudo apt-get install -y grafana
 
 Expected output (last few lines):
 ```
-Setting up grafana (10.x.x) ...
+Setting up grafana (13.x.x) ...
 ```
 
 Verify the binary is installed:
@@ -66,12 +66,17 @@ grafana-server --version
 
 Expected output:
 ```
-Version 10.x.x (commit: xxxxxxx, branch: HEAD)
+Version 13.x.x (commit: xxxxxxx, branch: HEAD)
 ```
 
 ---
 
 ## Step 4a — Start Grafana with systemd (if systemd is available)
+
+Unlike Prometheus, you do **not** create a user or a service file here — the Grafana APT package
+already did both for you during install. It created a dedicated `grafana` system user (same
+least-privilege reason as the `prometheus` user: Grafana should never run as `root`) and installed
+a ready-made `grafana-server.service` unit at `/lib/systemd/system/`. You just enable and start it.
 
 Check whether systemd is running (same check as in the Prometheus guide):
 ```bash
@@ -83,6 +88,10 @@ If the output is `systemd`:
 sudo systemctl enable grafana-server
 sudo systemctl start grafana-server
 ```
+
+**Why `enable` *and* `start`?** They do different things: `enable` registers the service to launch
+automatically on every boot, while `start` launches it right now in this session. Running both means
+Grafana is up immediately and stays up after future restarts.
 
 Check status:
 ```bash
@@ -127,7 +136,7 @@ Expected output:
 {
     "commit": "xxxxxxx",
     "database": "ok",
-    "version": "10.x.x"
+    "version": "13.x.x"
 }
 ```
 
