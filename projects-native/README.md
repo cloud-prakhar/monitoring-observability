@@ -1,88 +1,84 @@
-# Native Python Projects (04 & 05)
+# Native Projects (04–05)
 
-Two Python projects designed to run natively in WSL2 — no Docker required for the app itself. Each project can also be containerized if you prefer the Docker path.
+These projects run **natively in WSL2** as local Python processes — no Docker.
+They are scraped by the **native** Prometheus + Grafana you install in `wsl-setup/`.
 
-| Project | What it does | Port |
-|---------|-------------|------|
-| [04-system-monitor](04-system-monitor/) | Reads `/proc` and exposes CPU, memory, disk I/O, load avg, uptime | 8084 |
-| [05-url-health-checker](05-url-health-checker/) | Polls URLs every 30 s, tracks up/down and response time | 8085 |
-
----
-
-## Which monitoring setup should I use?
-
-| | Docker (`infra/`) | Native (`wsl-setup/`) |
-|---|---|---|
-| Projects 01–03 | Yes — designed for Docker | Works with extra steps |
-| Projects 04–05 | Works (see CONNECT.md) | Yes — primary path |
-
-If you have not set up Prometheus and Grafana yet, pick one path and stick with it:
-- **Docker path** → `cd infra && docker compose up -d`, then follow `infra/README.md`
-- **Native path** → follow `wsl-setup/01-install-prometheus.md` then `02-install-grafana.md`
+> Looking for the Docker track? Projects 01–03 in `../projects/` run in containers
+> against the shared `infra/` stack.
 
 ---
 
-## Quick start — Native WSL2
+## Prerequisites
+
+1. Complete `../wsl-setup/` so Prometheus and Grafana are installed and running as
+   system processes (`systemctl status prometheus grafana-server`).
+2. Have Python 3.12+ available (`python3 --version`).
+
+---
+
+## Quick start
+
+Each project follows the same pattern: create a venv, install deps, run `python app.py`,
+then wire it into Prometheus by editing `/etc/prometheus/prometheus.yml`.
+
+### Project 4 — System Monitor (port 8084)
 
 ```bash
-# Terminal 1 — Project 4
 cd projects-native/04-system-monitor/app
-python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 python app.py
 ```
 
+Then follow `04-system-monitor/CONNECT.md` to add the scrape job and import the dashboard.
+
+### Project 5 — URL Health Checker (port 8085)
+
 ```bash
-# Terminal 2 — Project 5
 cd projects-native/05-url-health-checker/app
-python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 python app.py
 ```
 
-Verify both are running:
-```bash
-curl http://localhost:8084/snapshot
-curl http://localhost:8085/status
-```
-
-Then follow each project's `CONNECT.md` to wire them to Prometheus and Grafana.
+Then follow `05-url-health-checker/CONNECT.md`.
 
 ---
 
-## Quick start — Docker
-
-```bash
-# Ensure infra is running first
-cd infra && docker compose up -d
-
-# Start System Monitor
-cd projects-native/04-system-monitor && docker compose up -d --build
-
-# Start URL Health Checker
-cd projects-native/05-url-health-checker && docker compose up -d --build
-```
-
----
-
-## Directory structure
+## Directory layout
 
 ```
 projects-native/
 ├── 04-system-monitor/
-│   ├── app/
-│   │   ├── app.py            — Flask app reading /proc
-│   │   ├── requirements.txt
-│   │   └── Dockerfile        — for the Docker path
-│   ├── docker-compose.yml    — Docker path only
-│   ├── CONNECT.md            — wiring guide (both paths)
-│   └── dashboards/
-│       └── system-monitor.json
+│   ├── app/                  — app.py + requirements.txt
+│   ├── dashboards/           — Grafana dashboard JSON
+│   ├── README.md             — what it does, metrics produced
+│   ├── CONNECT.md            — wiring guide (native WSL2)
+│   └── CLEANUP.md            — return machine to a clean state
 └── 05-url-health-checker/
     ├── app/
-    │   ├── app.py            — Flask app polling URLs
-    │   ├── requirements.txt
-    │   └── Dockerfile
-    ├── docker-compose.yml
+    ├── dashboards/
+    ├── README.md
     ├── CONNECT.md
-    └── dashboards/
-        └── url-health-checker.json
+    └── CLEANUP.md
 ```
+
+---
+
+## How they connect
+
+```
+  ┌──────────────────────────┐        scrape localhost:8084
+  │  native Prometheus :9090  │◀───────  system-monitor (python app.py)
+  │  (/etc/prometheus/...)    │◀───────  url-health-checker (python app.py)
+  └────────────┬─────────────┘        scrape localhost:8085
+               │ query
+        ┌──────┴───────┐
+        │ native Grafana│  :3000
+        └──────────────┘
+```
+
+Edit `/etc/prometheus/prometheus.yml`, add the project's job, then reload:
+`curl -X POST http://localhost:9090/-/reload`.

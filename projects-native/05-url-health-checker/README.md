@@ -56,8 +56,6 @@ http://localhost:8084/            → Project 4 — System Monitor
 
 ## Quick start
 
-### Native WSL2 path
-
 ```bash
 cd projects-native/05-url-health-checker/app
 python3 -m venv .venv
@@ -70,20 +68,6 @@ Wait 30 seconds for the first polling cycle, then check:
 ```bash
 curl -s http://localhost:8085/status | python3 -m json.tool
 ```
-
-### Docker path
-
-```bash
-# Requires infra to be running first:
-cd infra && docker compose up -d && cd ..
-
-cd projects-native/05-url-health-checker
-docker compose up -d --build
-```
-
-> **Note on Docker networking:** this project uses `network_mode: host` so the container
-> can reach `localhost:8081–8084`. The Prometheus scrape target is `localhost:8085`,
-> not `url-health-checker:8085`. See `CONNECT.md` for details.
 
 Follow **[CONNECT.md](CONNECT.md)** to wire the running app into Prometheus and Grafana.
 
@@ -133,9 +117,8 @@ sum by (url) (rate(url_checks_total{job="url-health-checker", result="error"}[5m
 |------|---------|
 | `app/app.py` | Flask app: URL poller thread + dynamic target registry + metrics |
 | `app/requirements.txt` | `flask`, `prometheus-client`, `requests` |
-| `app/Dockerfile` | Container image for the Docker path |
-| `docker-compose.yml` | Docker path: `network_mode: host` for localhost resolution |
-| `CONNECT.md` | Step-by-step wiring guide — Path A (native) and Path B (Docker) |
+| `CONNECT.md` | Step-by-step wiring guide (native WSL2) |
+| `CLEANUP.md` | Return machine to a clean state |
 | `dashboards/url-health-checker.json` | Importable Grafana dashboard (8 panels) |
 
 ---

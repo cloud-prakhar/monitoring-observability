@@ -1,18 +1,18 @@
 # Connecting URL Health Checker to Prometheus and Grafana
 
-This project polls a list of URLs every 30 seconds and records availability and response time as Prometheus metrics. It works like a lightweight Blackbox Exporter.
+This project polls a list of URLs every 30 seconds and records availability and
+response time as Prometheus metrics. It works like a lightweight Blackbox Exporter,
+and runs **natively in WSL2** as a local Python process.
 
-By default it monitors: Prometheus, Grafana, and Projects 1–4 on their standard ports. You can add any URL at runtime without restarting.
+By default it monitors: Prometheus, Grafana, and Projects 1–4 on their standard ports.
+You can add any URL at runtime without restarting.
 
-Choose the path that matches your setup.
+> **Prerequisite:** Follow `wsl-setup/` first so Prometheus and Grafana are installed
+> and running as system processes. (For the Docker track, use projects `01–03` instead.)
 
 ---
 
-## Path A — Native WSL2 (no Docker)
-
-Use this path if you followed `wsl-setup/` and have Prometheus + Grafana installed as system processes.
-
-### A1 — Install Python dependencies
+## Step 1 — Install Python dependencies
 
 ```bash
 cd projects-native/05-url-health-checker/app
@@ -22,7 +22,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### A2 — Start the app
+## Step 2 — Start the app
 
 ```bash
 python app.py
@@ -42,7 +42,7 @@ nohup python app.py > app.log 2>&1 &
 echo "App PID: $!"
 ```
 
-### A3 — Verify checks are running
+## Step 3 — Verify checks are running
 
 Wait 30 seconds for the first poll cycle, then:
 ```bash
@@ -64,22 +64,17 @@ Expected output:
 }
 ```
 
-URLs for projects that are not running will show `"up": 0` — that is expected. Start those projects to make them go green.
+URLs for projects that are not running will show `"up": 0` — that is expected. Start
+those projects to make them go green.
 
-### A4 — Add the scrape job to Prometheus
+## Step 4 — Add the scrape job to Prometheus
 
 ```bash
 sudo nano /etc/prometheus/prometheus.yml
 ```
 
-Uncomment the Project 5 block:
+Add this job under `scrape_configs:` (or uncomment the Project 5 block if it is already there):
 ```yaml
-# Before:
-  # - job_name: "url-health-checker"
-  #   static_configs:
-  #     - targets: ["localhost:8085"]
-
-# After:
   - job_name: "url-health-checker"
     static_configs:
       - targets: ["localhost:8085"]
@@ -90,7 +85,7 @@ Reload:
 curl -X POST http://localhost:9090/-/reload
 ```
 
-### A5 — Verify the target is UP
+## Step 5 — Verify the target is UP
 
 ```bash
 curl -s http://localhost:9090/api/v1/targets | python3 -c "
@@ -104,48 +99,6 @@ for t in d['data']['activeTargets']:
 Expected output includes:
 ```
 url-health-checker -> up
-```
-
----
-
-## Path B — Docker (connect to shared infra)
-
-> **Important:** The URL Health Checker monitors `localhost:8081-8085`. When running in Docker, `localhost` inside the container is the container itself, not the host machine. The `docker-compose.yml` for this project uses `network_mode: host` to work around this — the container shares the host network stack and `localhost` resolves correctly.
-
-### B1 — Ensure infra is running
-
-```bash
-cd infra && docker compose up -d
-```
-
-### B2 — Start the container
-
-```bash
-cd projects-native/05-url-health-checker
-docker compose up -d --build
-```
-
-Because `network_mode: host` is set, the container is not joined to the `monitoring` Docker network. Prometheus scrapes it via `localhost:8085` instead of a container name.
-
-Verify:
-```bash
-curl http://localhost:8085/status
-```
-
-### B3 — Add the scrape job to infra Prometheus
-
-Edit `infra/prometheus.yml` and add:
-```yaml
-  - job_name: "url-health-checker"
-    static_configs:
-      - targets: ["localhost:8085"]
-```
-
-Note: use `localhost`, not `url-health-checker`, because the container uses host networking.
-
-Reload Prometheus:
-```bash
-curl -X POST http://localhost:9090/-/reload
 ```
 
 ---
@@ -182,7 +135,9 @@ curl http://localhost:8085/targets
 3. Upload `projects-native/05-url-health-checker/dashboards/url-health-checker.json`
 4. Select **Prometheus** as the data source → **Import**
 
-The dashboard shows: total URLs monitored, count up/down, median response time, check error rate, per-URL up/down timeline, per-URL response times, HTTP status codes, and check errors.
+The dashboard shows: total URLs monitored, count up/down, median response time, check
+error rate, per-URL up/down timeline, per-URL response times, HTTP status codes, and
+check errors.
 
 ---
 
@@ -218,18 +173,11 @@ sum by (url) (rate(url_checks_total{job="url-health-checker", result="error"}[5m
 
 ## Clean up
 
-> For a complete teardown (venv, image, scrape job, and dashboard too), see
+> For a complete teardown (venv, scrape job, and dashboard too), see
 > **[CLEANUP.md](CLEANUP.md)**. Quick version:
 
-**Native:**
 ```bash
 kill $(pgrep -f "python app.py")
-# Remove scrape job from /etc/prometheus/prometheus.yml and reload:
+# Remove the scrape job from /etc/prometheus/prometheus.yml, then reload:
 curl -X POST http://localhost:9090/-/reload
-```
-
-**Docker:**
-```bash
-cd projects-native/05-url-health-checker
-docker compose down
 ```

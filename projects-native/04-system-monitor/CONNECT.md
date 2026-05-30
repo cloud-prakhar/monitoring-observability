@@ -1,16 +1,15 @@
 # Connecting System Monitor to Prometheus and Grafana
 
-This project reads `/proc` to expose CPU, memory, load average, disk I/O, and uptime as Prometheus metrics. It runs natively in WSL2 (no container needed) but can also run in Docker.
+This project reads `/proc` to expose CPU, memory, load average, disk I/O, and uptime
+as Prometheus metrics. It runs **natively in WSL2** as a local Python process.
 
-Choose the path that matches your setup.
+> **Prerequisite:** Follow `wsl-setup/` first so Prometheus and Grafana are installed
+> and running as system processes. (For the Docker track, use projects `01–03` instead —
+> those run in containers against the `infra/` stack.)
 
 ---
 
-## Path A — Native WSL2 (no Docker)
-
-Use this path if you followed `wsl-setup/` and have Prometheus + Grafana installed as system processes.
-
-### A1 — Install Python dependencies
+## Step 1 — Install Python dependencies
 
 ```bash
 cd projects-native/04-system-monitor/app
@@ -20,7 +19,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### A2 — Start the app
+## Step 2 — Start the app
 
 ```bash
 python app.py
@@ -39,7 +38,7 @@ nohup python app.py > app.log 2>&1 &
 echo "App PID: $!"
 ```
 
-### A3 — Verify the app is collecting data
+## Step 3 — Verify the app is collecting data
 
 ```bash
 curl http://localhost:8084/snapshot
@@ -64,21 +63,15 @@ curl http://localhost:8084/metrics | grep system_cpu
 
 You should see lines like `system_cpu_usage_percent 4.2`.
 
-### A4 — Add the scrape job to Prometheus
+## Step 4 — Add the scrape job to Prometheus
 
 Edit the native Prometheus config:
 ```bash
 sudo nano /etc/prometheus/prometheus.yml
 ```
 
-Find the commented-out block for Project 4 and uncomment it:
+Add this job under `scrape_configs:` (or uncomment the Project 4 block if it is already there):
 ```yaml
-# Before:
-  # - job_name: "system-monitor"
-  #   static_configs:
-  #     - targets: ["localhost:8084"]
-
-# After:
   - job_name: "system-monitor"
     static_configs:
       - targets: ["localhost:8084"]
@@ -89,7 +82,7 @@ Save the file, then reload Prometheus:
 curl -X POST http://localhost:9090/-/reload
 ```
 
-### A5 — Verify the target is UP
+## Step 5 — Verify the target is UP
 
 ```bash
 curl -s http://localhost:9090/api/v1/targets | python3 -c "
@@ -109,75 +102,15 @@ Or open **http://localhost:9090/targets** in the browser.
 
 ---
 
-## Path B — Docker (connect to shared infra)
-
-Use this path if you are running the Docker-based setup from `infra/`.
-
-### B1 — Ensure the monitoring network exists
-
-```bash
-cd infra && docker compose up -d
-docker network ls | grep monitoring
-```
-
-Expected: a line showing `monitoring` with driver `bridge`.
-
-### B2 — Start the container
-
-```bash
-cd projects-native/04-system-monitor
-docker compose up -d --build
-```
-
-Expected output:
-```
-[+] Building ...
- ✔ Container system-monitor  Started
-```
-
-The `docker-compose.yml` mounts the host `/proc` into the container so the app reads real host metrics, not the container's namespaced view.
-
-Verify:
-```bash
-curl http://localhost:8084/snapshot
-```
-
-### B3 — Add the scrape job to infra Prometheus
-
-Edit `infra/prometheus.yml` and add:
-```yaml
-  - job_name: "system-monitor"
-    static_configs:
-      - targets: ["system-monitor:8084"]
-```
-
-Note: use the container name `system-monitor`, not `localhost`.
-
-Reload Prometheus:
-```bash
-curl -X POST http://localhost:9090/-/reload
-```
-
-Verify:
-```bash
-curl -s http://localhost:9090/api/v1/targets | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-for t in d['data']['activeTargets']:
-    print(t['labels']['job'], '->', t['health'])
-"
-```
-
----
-
-## Step — Open the Grafana dashboard
+## Step 6 — Open the Grafana dashboard
 
 1. Open **http://localhost:3000** → log in with `admin` / `admin`
 2. Go to **Dashboards** → **New** → **Import**
 3. Upload `projects-native/04-system-monitor/dashboards/system-monitor.json`
 4. Select **Prometheus** as the data source → **Import**
 
-The dashboard shows 8 panels: CPU usage, memory, load average, uptime, per-core CPU, memory over time, load avg over time, and disk I/O rates.
+The dashboard shows 8 panels: CPU usage, memory, load average, uptime, per-core CPU,
+memory over time, load avg over time, and disk I/O rates.
 
 ---
 
@@ -217,20 +150,13 @@ system_load_average{job="system-monitor"}
 
 ## Clean up
 
-> For a complete teardown (venv, image, scrape job, and dashboard too), see
+> For a complete teardown (venv, scrape job, and dashboard too), see
 > **[CLEANUP.md](CLEANUP.md)**. Quick version:
 
-**Native:**
 ```bash
 # Stop the app
 kill $(pgrep -f "python app.py")
 
-# Remove scrape job from /etc/prometheus/prometheus.yml and reload:
+# Remove the scrape job from /etc/prometheus/prometheus.yml, then reload:
 curl -X POST http://localhost:9090/-/reload
-```
-
-**Docker:**
-```bash
-cd projects-native/04-system-monitor
-docker compose down
 ```

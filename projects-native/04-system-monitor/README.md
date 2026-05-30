@@ -1,8 +1,7 @@
 # Project 4 — System Monitor
 
 A Python/Flask app that reads the Linux `/proc` filesystem and exposes real-time system
-metrics as Prometheus endpoints. Runs natively in WSL2 without Docker, or in a container
-using Docker.
+metrics as Prometheus endpoints. Runs natively in WSL2 as a local Python process.
 
 This project teaches you how real monitoring agents work — they read kernel-exposed files
 and translate them into metrics. Node Exporter (the standard Prometheus system metrics
@@ -57,8 +56,6 @@ to convert it to a per-second throughput).
 
 ## Quick start
 
-### Native WSL2 path
-
 ```bash
 cd projects-native/04-system-monitor/app
 python3 -m venv .venv
@@ -71,16 +68,6 @@ Verify:
 ```bash
 curl http://localhost:8084/snapshot
 curl http://localhost:8084/metrics | grep system_cpu
-```
-
-### Docker path
-
-```bash
-# Requires infra to be running first:
-cd infra && docker compose up -d && cd ..
-
-cd projects-native/04-system-monitor
-docker compose up -d --build
 ```
 
 Follow **[CONNECT.md](CONNECT.md)** to wire the running app into Prometheus and Grafana.
@@ -113,9 +100,8 @@ system_load_average{job="system-monitor"}
 |------|---------|
 | `app/app.py` | Flask app that reads `/proc` and exposes metrics |
 | `app/requirements.txt` | `flask`, `prometheus-client` |
-| `app/Dockerfile` | Container image for the Docker path |
-| `docker-compose.yml` | Docker path: bind-mounts host `/proc`, joins `monitoring` network |
-| `CONNECT.md` | Step-by-step wiring guide — Path A (native) and Path B (Docker) |
+| `CONNECT.md` | Step-by-step wiring guide (native WSL2) |
+| `CLEANUP.md` | Return machine to a clean state |
 | `dashboards/system-monitor.json` | Importable Grafana dashboard (8 panels) |
 
 ---

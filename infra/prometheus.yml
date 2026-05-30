@@ -1,7 +1,10 @@
 # infra/prometheus.yml
 #
-# This is the shared Prometheus configuration for all three projects.
+# This is the shared Prometheus configuration for the Docker projects (01–03).
 # Prometheus and Grafana run here as the central monitoring infrastructure.
+#
+# Projects 04–05 are native-only — they are scraped by the native Prometheus
+# (/etc/prometheus/prometheus.yml from wsl-setup/), not by this Docker instance.
 #
 # HOW TO ADD A PROJECT:
 #   1. Start the project (docker compose up -d --build in the project directory)
@@ -45,22 +48,7 @@ scrape_configs:
   #     - targets: ["cache-service:8083"]
 
   # ---------------------------------------------------------------------------
-  # Project 4 — System Monitor (port 8084)
-  # Native path:  cd projects-native/04-system-monitor/app && python app.py
-  #   target → localhost:8084
-  # Docker path:  cd projects-native/04-system-monitor && docker compose up -d --build
-  #   target → system-monitor:8084
+  # Projects 4 & 5 (System Monitor, URL Health Checker) are NATIVE-ONLY.
+  # They run as local processes and are scraped by the native Prometheus from
+  # wsl-setup/ — add their jobs to /etc/prometheus/prometheus.yml, not here.
   # ---------------------------------------------------------------------------
-  # - job_name: "system-monitor"
-  #   static_configs:
-  #     - targets: ["system-monitor:8084"]   # Docker path
-  #   # - targets: ["localhost:8084"]        # Native path (replace line above)
-
-  # ---------------------------------------------------------------------------
-  # Project 5 — URL Health Checker (port 8085)
-  # Native path:  cd projects-native/05-url-health-checker/app && python app.py
-  # Docker path:  uses network_mode: host → target is always localhost:8085
-  # ---------------------------------------------------------------------------
-  # - job_name: "url-health-checker"
-  #   static_configs:
-  #     - targets: ["localhost:8085"]

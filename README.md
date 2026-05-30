@@ -25,14 +25,14 @@ closer to how production systems work). Pick one and follow it consistently.
 │   ├── 02-install-grafana.md
 │   └── 03-wire-together.md
 │
-├── infra/                      # Shared Docker infra for projects 01–03 (and 04–05)
+├── infra/                      # Shared Docker infra for projects 01–03
 │
-├── projects/                   # Docker-first projects (use infra/ as monitoring backend)
+├── projects/                   # Docker projects (use infra/ as monitoring backend)
 │   ├── 01-flask-web-api/       # Flask REST API — request rate, latency, error rate
 │   ├── 02-job-processor/       # Background job queue — queue depth, throughput, failures
 │   └── 03-cache-service/       # In-memory cache — hit rate, key count, TTL evictions
 │
-└── projects-native/            # Native-first projects (Docker also supported)
+└── projects-native/            # Native-only projects (run with python app.py)
     ├── 04-system-monitor/      # Reads /proc — CPU, memory, disk I/O, load average
     └── 05-url-health-checker/  # Polls URLs — availability and response time
 ```
@@ -92,11 +92,12 @@ Follow `wsl-setup/` to install Prometheus and Grafana natively, then use `projec
 2. wsl-setup/02-install-grafana.md     ← apt install, start server
 3. wsl-setup/03-wire-together.md       ← add datasource, first query
 
-4. projects-native/04-system-monitor/CONNECT.md    ← /proc metrics, Path A
-5. projects-native/05-url-health-checker/CONNECT.md ← availability monitoring, Path A
+4. projects-native/04-system-monitor/CONNECT.md    ← /proc metrics
+5. projects-native/05-url-health-checker/CONNECT.md ← availability monitoring
 ```
 
-In each project's CONNECT.md, **Path A** is the native procedure and **Path B** is Docker.
+Projects 04–05 are native-only — they run as local Python processes scraped by the
+native Prometheus. Projects 01–03 are the Docker track.
 
 In each `prometheus-setup/` and `grafana-setup/` directory, do `01-docker-cli.md` before
 `02-docker-compose.md` — the manual commands make the Compose file meaningful instead of magic.
@@ -185,8 +186,8 @@ reference in each project would fail to find it.
 | Flask Web API | 8081 | http://localhost:8081 | Docker (`projects/01-flask-web-api/`) |
 | Job Processor | 8082 | http://localhost:8082 | Docker (`projects/02-job-processor/`) |
 | Cache Service | 8083 | http://localhost:8083 | Docker (`projects/03-cache-service/`) |
-| System Monitor | 8084 | http://localhost:8084 | Native or Docker (`projects-native/04-system-monitor/`) |
-| URL Health Checker | 8085 | http://localhost:8085 | Native or Docker (`projects-native/05-url-health-checker/`) |
+| System Monitor | 8084 | http://localhost:8084 | Native (`projects-native/04-system-monitor/`) |
+| URL Health Checker | 8085 | http://localhost:8085 | Native (`projects-native/05-url-health-checker/`) |
 
 **Grafana login:** `admin` / `admin`
 

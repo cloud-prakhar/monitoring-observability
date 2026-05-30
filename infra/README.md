@@ -16,16 +16,17 @@ Start this once and leave it running while you work on the projects.
   └─────────────┘             └────────────────────┘
          ▲
          │ scrape /metrics
-         ├── flask-web-api:8081    (project 1, Docker)
-         ├── job-processor:8082    (project 2, Docker)
-         ├── cache-service:8083    (project 3, Docker)
-         ├── system-monitor:8084   (project 4, Docker path)
-         └── localhost:8085        (project 5, host-network Docker or native)
+         ├── flask-web-api:8081    (project 1)
+         ├── job-processor:8082    (project 2)
+         └── cache-service:8083    (project 3)
 ```
 
-Prometheus and Grafana live on a Docker network called **`monitoring`**. Projects 1–4
-join this network so Prometheus can scrape them by container name. Project 5 uses
-`network_mode: host` and is scraped via `localhost`.
+Prometheus and Grafana live on a Docker network called **`monitoring`**. Projects 1–3
+join this network so Prometheus can scrape them by container name.
+
+> **Projects 04–05 are native-only.** They run as local Python processes and are scraped
+> by the **native** Prometheus from `wsl-setup/`, not by this Docker instance. See
+> `projects-native/`.
 
 ---
 
@@ -120,8 +121,9 @@ until that project is started and connected.
 | `grafana/dashboards/flask-web-api.json` | Project 1 standalone dashboard |
 | `grafana/dashboards/job-processor.json` | Project 2 standalone dashboard |
 | `grafana/dashboards/cache-service.json` | Project 3 standalone dashboard |
-| `grafana/dashboards/system-monitor.json` | Project 4 standalone dashboard |
-| `grafana/dashboards/url-health-checker.json` | Project 5 standalone dashboard |
+
+> The native projects (04–05) keep their dashboards in `projects-native/<project>/dashboards/`
+> and are imported manually into the native Grafana — they are not provisioned here.
 
 ---
 
