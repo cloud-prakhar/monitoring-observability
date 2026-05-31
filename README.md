@@ -16,14 +16,21 @@ closer to how production systems work). Pick one and follow it consistently.
 │   ├── wsl-setup.md            # Windows: WSL2 + Docker Desktop one-time setup
 │   └── troubleshooting.md      # Error messages and fix commands
 │
+├── monitoring-fundamentals/    # Concepts first (read before the hands-on tracks)
+│   ├── 01-introduction-to-monitoring/   # What monitoring is, history, vs observability
+│   └── 02-monitoring-fundamentals/      # Metrics, logs, traces, alerts, SLI/SLO/SLA, error budgets
+│
 ├── prometheus-setup/           # Learn Prometheus standalone (no Grafana yet)
 ├── grafana-setup/              # Learn Grafana standalone (no Prometheus yet)
 ├── integration/                # Wire the two together — explains the networking concepts
 │
-├── wsl-setup/                  # Native install: Prometheus + Grafana binaries on WSL2
-│   ├── 01-install-prometheus.md
+├── wsl-setup/                  # Native install: Prometheus + Grafana on Windows + WSL2
+├── linux-setup/                # Native install: Prometheus + Grafana on bare-metal / VM Linux
+├── mac-setup/                  # Native install: Prometheus + Grafana on macOS (Homebrew)
+│   ├── 01-install-prometheus.md   # (each native dir has the same 4 guides)
 │   ├── 02-install-grafana.md
-│   └── 03-wire-together.md
+│   ├── 03-wire-together.md
+│   └── 04-cleanup.md
 │
 ├── infra/                      # Shared Docker infra for projects 01–03
 │
@@ -33,8 +40,10 @@ closer to how production systems work). Pick one and follow it consistently.
 │   └── 03-cache-service/       # In-memory cache — hit rate, key count, TTL evictions
 │
 └── projects-native/            # Native-only projects (run with python app.py)
-    ├── 04-system-monitor/      # Reads /proc — CPU, memory, disk I/O, load average
-    └── 05-url-health-checker/  # Polls URLs — availability and response time
+    ├── 04-system-monitor/      # Linux only · raw /proc — CPU, memory, disk I/O, load
+    ├── 05-url-health-checker/  # Any OS · polls URLs — availability and response time
+    ├── 06-mac-system-monitor/  # macOS · psutil — CPU, memory, network, battery
+    └── 07-linux-system-monitor/# Linux · psutil — the portable alternative to project 04
 ```
 
 ---
@@ -52,22 +61,45 @@ docker run hello-world   # verify Docker works
 docker compose version   # verify Compose v2
 ```
 
-### Path B — Native WSL2 (no Docker for Prometheus/Grafana)
+### Path B — Native (no Docker for Prometheus/Grafana)
 
-Prometheus and Grafana run as system processes inside WSL2. Projects run with `python app.py`.
+Prometheus and Grafana run as system processes directly on your OS. Projects run with
+`python app.py`. Pick the native setup directory for your machine — they all end up with
+Prometheus on 9090 and Grafana on 3000:
 
-**Prerequisites:** WSL2 with Ubuntu 22.04+. No Docker required for the monitoring layer.
+| Your machine | Setup directory | Service manager | Prometheus config path |
+|---|---|---|---|
+| Windows + WSL2 (Ubuntu) | `wsl-setup/` | systemd | `/etc/prometheus/prometheus.yml` |
+| Bare-metal / VM Linux | `linux-setup/` | systemd | `/etc/prometheus/prometheus.yml` |
+| macOS | `mac-setup/` | launchd (`brew services`) | `$(brew --prefix)/etc/prometheus.yml` |
 
 ```bash
-wsl --version            # verify WSL2 is installed
-lsb_release -a           # verify Ubuntu version
+# Linux / WSL2 — verify systemd is PID 1:
+ps --no-headers -o comm 1     # expected: systemd
+
+# macOS — verify Homebrew is installed:
+brew --version
 ```
 
-Follow `wsl-setup/` to install Prometheus and Grafana natively, then use `projects-native/`.
+Follow the matching `*-setup/` directory to install Prometheus and Grafana natively, then
+use `projects-native/`. Project availability depends on the OS — see the table in
+`projects-native/README.md` (e.g. project 04 needs Linux `/proc`; project 06 is the macOS build).
 
 ---
 
 ## Recommended learning order
+
+### Concepts first (recommended for everyone)
+
+```
+0. monitoring-fundamentals/       ← what monitoring is + the core vocabulary
+   ├── 01-introduction-to-monitoring/   (monitoring vs observability, who uses it, why)
+   └── 02-monitoring-fundamentals/      (metrics, logs, traces, alerts, SLI/SLO/SLA, error budgets)
+```
+
+New to monitoring? Read this before either path below — the hands-on steps assume you know
+terms like *metric*, *gauge*, *counter*, *histogram*, and *SLO*. Already comfortable with these?
+Skip straight to the Docker or Native path.
 
 ### Docker path
 
@@ -85,19 +117,26 @@ Follow `wsl-setup/` to install Prometheus and Grafana natively, then use `projec
 8. projects/03-cache-service/CONNECT.md   ← hit ratio, gauges, TTL evictions
 ```
 
-### Native WSL2 path
+### Native path
+
+Use the setup directory for your OS (`wsl-setup/`, `linux-setup/`, or `mac-setup/`) —
+the file names are identical:
 
 ```
-1. wsl-setup/01-install-prometheus.md  ← binary install, systemd service
-2. wsl-setup/02-install-grafana.md     ← apt install, start server
-3. wsl-setup/03-wire-together.md       ← add datasource, first query
+1. <os>-setup/01-install-prometheus.md  ← install Prometheus, run as a service
+2. <os>-setup/02-install-grafana.md     ← install Grafana, start the server
+3. <os>-setup/03-wire-together.md       ← add datasource, first query
+   <os>-setup/04-cleanup.md             ← (when done) uninstall everything
 
-4. projects-native/04-system-monitor/CONNECT.md    ← /proc metrics
-5. projects-native/05-url-health-checker/CONNECT.md ← availability monitoring
+4. projects-native/04-system-monitor/CONNECT.md     ← /proc metrics (Linux/WSL2)
+5. projects-native/05-url-health-checker/CONNECT.md ← availability monitoring (any OS)
+6. projects-native/06-mac-system-monitor/CONNECT.md ← psutil metrics (macOS)
+7. projects-native/07-linux-system-monitor/CONNECT.md ← psutil metrics (Linux)
 ```
 
-Projects 04–05 are native-only — they run as local Python processes scraped by the
-native Prometheus. Projects 01–03 are the Docker track.
+Projects 04–07 are native-only — they run as local Python processes scraped by the native
+Prometheus. Which ones apply depends on your OS (see `projects-native/README.md`). Projects
+01–03 are the Docker track.
 
 In each `prometheus-setup/` and `grafana-setup/` directory, do `01-docker-cli.md` before
 `02-docker-compose.md` — the manual commands make the Compose file meaningful instead of magic.
@@ -123,25 +162,23 @@ curl -X POST http://localhost:9090/-/reload
 #    Dashboards → Projects → All Projects Overview
 ```
 
-## Quick start — Native WSL2 path (projects 04–05)
+## Quick start — Native path (projects 04–07)
 
 ```bash
-# 1. Follow wsl-setup/ to install Prometheus and Grafana natively (one-time)
+# 1. Follow the setup dir for your OS to install Prometheus + Grafana natively (one-time):
+#    Windows+WSL2 → wsl-setup/   ·   Linux → linux-setup/   ·   macOS → mac-setup/
 
-# 2. Start Project 4
-cd projects-native/04-system-monitor/app
+# 2. Start a project (example: macOS uses project 6; Linux uses 4/5/7)
+cd projects-native/06-mac-system-monitor/app   # or 04-system-monitor on Linux
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 python app.py &
 
-# 3. Start Project 5
-cd ../../05-url-health-checker/app
-python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-python app.py &
-
-# 4. Uncomment their jobs in /etc/prometheus/prometheus.yml, then reload
+# 3. Uncomment that project's job in the Prometheus config, then reload:
+#    Linux/WSL2 → /etc/prometheus/prometheus.yml   ·   macOS → $(brew --prefix)/etc/prometheus.yml
 curl -X POST http://localhost:9090/-/reload
+#    (macOS via brew services: brew services restart prometheus)
 
-# 5. Open Grafana at http://localhost:3000 → import the dashboard JSONs
+# 4. Open Grafana at http://localhost:3000 → import the project's dashboard JSON
 ```
 
 ---
@@ -181,13 +218,15 @@ reference in each project would fail to find it.
 
 | Service | Port | URL | Setup |
 |---------|------|-----|-------|
-| Prometheus | 9090 | http://localhost:9090 | Docker (`infra/`) or Native (`wsl-setup/`) |
-| Grafana | 3000 | http://localhost:3000 | Docker (`infra/`) or Native (`wsl-setup/`) |
+| Prometheus | 9090 | http://localhost:9090 | Docker (`infra/`) or Native (`wsl-setup/`, `linux-setup/`, `mac-setup/`) |
+| Grafana | 3000 | http://localhost:3000 | Docker (`infra/`) or Native (`wsl-setup/`, `linux-setup/`, `mac-setup/`) |
 | Flask Web API | 8081 | http://localhost:8081 | Docker (`projects/01-flask-web-api/`) |
 | Job Processor | 8082 | http://localhost:8082 | Docker (`projects/02-job-processor/`) |
 | Cache Service | 8083 | http://localhost:8083 | Docker (`projects/03-cache-service/`) |
-| System Monitor | 8084 | http://localhost:8084 | Native (`projects-native/04-system-monitor/`) |
-| URL Health Checker | 8085 | http://localhost:8085 | Native (`projects-native/05-url-health-checker/`) |
+| System Monitor | 8084 | http://localhost:8084 | Native Linux/WSL2 (`projects-native/04-system-monitor/`) |
+| URL Health Checker | 8085 | http://localhost:8085 | Native any OS (`projects-native/05-url-health-checker/`) |
+| Mac System Monitor | 8086 | http://localhost:8086 | Native macOS (`projects-native/06-mac-system-monitor/`) |
+| Linux System Monitor | 8087 | http://localhost:8087 | Native Linux (`projects-native/07-linux-system-monitor/`) |
 
 **Grafana login:** `admin` / `admin`
 
@@ -203,6 +242,8 @@ reference in each project would fail to find it.
 | Cache Service | `cache-service` | `projects/03-cache-service/dashboards/` | Hit rate, key count, evictions |
 | System Monitor | `system-monitor` | `projects-native/04-system-monitor/dashboards/` | CPU, memory, disk, load avg |
 | URL Health Checker | `url-health-checker` | `projects-native/05-url-health-checker/dashboards/` | Availability, response time |
+| Mac System Monitor | `mac-system-monitor` | `projects-native/06-mac-system-monitor/dashboards/` | CPU, memory, network, battery |
+| Linux System Monitor | `linux-system-monitor` | `projects-native/07-linux-system-monitor/dashboards/` | CPU, memory, network, disk I/O |
 
 To import a dashboard: Grafana → Dashboards → New → Import → upload the JSON file.
 

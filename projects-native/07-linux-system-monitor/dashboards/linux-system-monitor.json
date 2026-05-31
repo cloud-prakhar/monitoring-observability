@@ -1,0 +1,160 @@
+{
+  "description": "Linux System Monitor — CPU, memory, load, battery, network, and disk I/O via psutil (job=linux-system-monitor).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"},
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "green", "value": null},
+          {"color": "yellow", "value": 70},
+          {"color": "red", "value": 90}
+        ]},
+        "unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}, "id": 1,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "title": "CPU Usage",
+      "type": "stat",
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${datasource}"},
+        "expr": "host_cpu_usage_percent{job=\"linux-system-monitor\"}", "legendFormat": "CPU %", "refId": "A"}]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"},
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "green", "value": null},
+          {"color": "yellow", "value": 75},
+          {"color": "red", "value": 90}
+        ]},
+        "unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}, "id": 2,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "title": "Memory Usage",
+      "type": "stat",
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${datasource}"},
+        "expr": "host_memory_usage_percent{job=\"linux-system-monitor\"}", "legendFormat": "Mem %", "refId": "A"}]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"},
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "green", "value": null},
+          {"color": "yellow", "value": 4},
+          {"color": "red", "value": 8}
+        ]},
+        "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}, "id": 3,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "title": "Load Average (1m)",
+      "type": "stat",
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${datasource}"},
+        "expr": "host_load_average{job=\"linux-system-monitor\", interval=\"1m\"}", "legendFormat": "load 1m", "refId": "A"}]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"},
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "red", "value": null},
+          {"color": "yellow", "value": 20},
+          {"color": "green", "value": 50}
+        ]},
+        "unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}, "id": 4,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center",
+        "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "title": "Battery",
+      "type": "stat",
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${datasource}"},
+        "expr": "host_battery_percent{job=\"linux-system-monitor\"}", "legendFormat": "battery %", "refId": "A"}]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"},
+        "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never", "spanNulls": false},
+        "unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}, "id": 5,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "none"}},
+      "title": "CPU Usage Over Time (all cores)",
+      "type": "timeseries",
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "host_cpu_usage_percent{job=\"linux-system-monitor\"}",
+          "legendFormat": "overall", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "host_cpu_core_usage_percent{job=\"linux-system-monitor\"}",
+          "legendFormat": "{{core}}", "refId": "B"}
+      ]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"},
+        "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never", "spanNulls": false},
+        "unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}, "id": 6,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["lastNotNull"]},
+        "tooltip": {"mode": "multi", "sort": "none"}},
+      "title": "Memory — Total vs Used",
+      "type": "timeseries",
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "host_memory_total_bytes{job=\"linux-system-monitor\"}",
+          "legendFormat": "total", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "host_memory_used_bytes{job=\"linux-system-monitor\"}",
+          "legendFormat": "used", "refId": "B"}
+      ]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"},
+        "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never", "spanNulls": false},
+        "unit": "Bps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}, "id": 7,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "none"}},
+      "title": "Network Throughput (Sent vs Received)",
+      "type": "timeseries",
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "rate(host_net_bytes_recv_total{job=\"linux-system-monitor\"}[1m])",
+          "legendFormat": "recv {{nic}}", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "rate(host_net_bytes_sent_total{job=\"linux-system-monitor\"}[1m])",
+          "legendFormat": "sent {{nic}}", "refId": "B"}
+      ]
+    },
+    { "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"},
+        "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never", "spanNulls": false},
+        "unit": "Bps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}, "id": 8,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "none"}},
+      "title": "Disk I/O Rate (Read vs Write)",
+      "type": "timeseries",
+      "targets": [
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "rate(host_disk_read_bytes_total{job=\"linux-system-monitor\"}[1m])",
+          "legendFormat": "read", "refId": "A"},
+        {"datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "expr": "rate(host_disk_write_bytes_total{job=\"linux-system-monitor\"}[1m])",
+          "legendFormat": "write", "refId": "B"}
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["system", "linux", "psutil", "project-7"],
+  "templating": {
+    "list": [{"current": {}, "hide": 0, "includeAll": false, "label": "Data source",
+      "multi": false, "name": "datasource", "options": [], "query": "prometheus",
+      "refresh": 1, "regex": "", "sort": 0, "type": "datasource"}]
+  },
+  "time": {"from": "now-15m", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Linux System Monitor",
+  "uid": "linux-system-monitor",
+  "version": 1
+}
