@@ -32,6 +32,17 @@ join this network so Prometheus can scrape them by container name.
 
 ## Start the infrastructure
 
+> **Coming from `../integration/`?** That section runs its own `prometheus` and `grafana`
+> containers, which use the **same names** as this stack. Docker won't let two containers
+> share a name, so starting this one on top of it fails with
+> `Conflict. The container name "/prometheus" is already in use`. Tear the integration
+> stack down first:
+> ```bash
+> docker compose -f ../integration/docker-compose.yml down
+> ```
+> The `integration/` stack is a standalone teaching exercise — you don't keep it running
+> alongside `infra/`. This `infra/` stack is the one the projects scrape against.
+
 ```bash
 cd infra
 docker compose up -d
