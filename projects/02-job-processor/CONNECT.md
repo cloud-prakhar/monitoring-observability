@@ -74,9 +74,31 @@ Open `infra/prometheus.yml` and uncomment the `job-processor` block:
 
 ## Step 3 — Reload Prometheus
 
+Prometheus watches for a reload signal — you do not normally need to restart it:
+
 ```bash
 curl -X POST http://localhost:9090/-/reload
 ```
+
+Expected: HTTP 200 response (empty body). Confirm it picked up the file:
+
+```bash
+docker logs prometheus | tail -5
+```
+
+Look for:
+```
+msg="Completed loading of configuration file" filename=/etc/prometheus/prometheus.yml
+```
+
+> **If the new target never appears after a reload:** `infra/prometheus.yml` is bind-mounted,
+> and editors that save with an atomic write (write to a temp file, then rename) swap the file's
+> inode. The reload then re-parses the *old* inode still held by the mount, so your edit is
+> invisible. Force the container to re-open the file:
+>
+> ```bash
+> cd ../../infra && docker compose restart prometheus && cd -
+> ```
 
 ---
 
@@ -87,12 +109,18 @@ Open **http://localhost:9090/targets**.
 `job-processor (1/1 up)` should appear. If it shows DOWN:
 
 ```bash
+# Is the container running at all?
+docker ps | grep job-processor
+
 # Is the container on the monitoring network?
 docker inspect job-processor --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
 
 # Can Prometheus reach the metrics endpoint?
 docker exec prometheus wget -qO- http://job-processor:8082/metrics | head -5
 ```
+
+If the container is running and on the `monitoring` network but the target is still DOWN right
+after editing the scrape config, re-read the inode note in Step 3 and restart Prometheus.
 
 ---
 

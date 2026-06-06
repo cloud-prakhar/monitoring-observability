@@ -55,7 +55,9 @@ cd infra && docker compose up -d && cd ..
 cd projects/02-job-processor
 docker compose up -d --build
 
-# 3. Submit some jobs
+# 3. Wire it into Prometheus (uncomment the job-processor block,
+#    reload, and verify the target is UP) — full steps in CONNECT.md
+#    Then submit some jobs so Prometheus has data to scrape:
 for i in $(seq 1 10); do
   curl -s -X POST http://localhost:8082/jobs \
     -H "Content-Type: application/json" \
@@ -65,6 +67,9 @@ done
 # 4. Connect to Prometheus + Grafana
 # Follow CONNECT.md
 ```
+
+> Submit jobs **after** the scrape job is uncommented and Prometheus is reloaded (CONNECT.md
+> Steps 2–3) — jobs submitted before that won't be captured.
 
 ---
 
