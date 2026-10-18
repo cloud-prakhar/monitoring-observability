@@ -5,9 +5,16 @@ Simulates a busy web server by continuously generating **raw access-log lines** 
 **Logstash**, which parses them into searchable fields. This is the **full ELK pipeline**, and the
 project that teaches **ETL** and **grok**.
 
-```
-web-access-log-analyzer  ──raw text──▶  access.log  ──Filebeat──▶  Logstash (grok ETL)  ──▶  Elasticsearch  ──▶  Kibana
-                                                                   (Path B — Logstash parses)
+```mermaid
+flowchart LR
+    APP["web-access-log-analyzer"]:::app -->|"raw text"| LOG["📄 access.log"]:::file
+    LOG -->|Filebeat| LS["Logstash (grok ETL)<br/>Path B — Logstash parses"]:::ls
+    LS --> ES[("Elasticsearch")]:::es --> KB["Kibana"]:::kb
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 > Do **[Project 1](../01-flask-json-logger/README.md)** first — it's the simpler pipeline. This

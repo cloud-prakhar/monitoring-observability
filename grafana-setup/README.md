@@ -18,19 +18,16 @@ A standalone Grafana instance running locally at **http://localhost:3000**. You 
 in, explore the UI, and learn how to add a data source manually — preparation for
 wiring Grafana to Prometheus in the next section.
 
-```
-Your browser
-     |
-     | http://localhost:3000
-     v
-+------------------+
-|   Grafana        |
-|   container      |
-|   port 3000      |
-+------------------+
-         |
-         v
-  [grafdata volume]   <-- dashboards, users, settings stored here
+```mermaid
+flowchart TB
+    B["🖥️ Your browser"]:::user
+    G["Grafana container<br/>port 3000"]:::graf
+    V[("💾 grafdata volume<br/>dashboards, users, settings stored here")]:::store
+    B -->|"http://localhost:3000"| G
+    G --> V
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
+    classDef user fill:#8E24AA,stroke:#4A148C,color:#fff
 ```
 
 ---

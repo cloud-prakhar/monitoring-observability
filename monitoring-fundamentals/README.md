@@ -22,17 +22,20 @@ Start with Section 1, then Section 2 — each topic file is short and self-conta
 
 ## How this fits with the rest of the repo
 
-```
-monitoring-fundamentals/   ← you are here: the concepts (read first)
-        │
-        ▼
-prometheus-setup/ · grafana-setup/ · integration/   ← learn the tools (Docker)
-        │
-        ▼
-wsl-setup/ · linux-setup/ · mac-setup/   ← or run them natively (no Docker)
-        │
-        ▼
-projects/ · projects-native/   ← apply it: real apps with custom metrics + dashboards
+```mermaid
+flowchart TB
+    A["📘 <b>monitoring-fundamentals/</b><br/>you are here: the concepts (read first)"]:::step
+    B["🐳 <b>prometheus-setup/ · grafana-setup/ · integration/</b><br/>learn the tools (Docker)"]:::app
+    C["🖥️ <b>wsl-setup/ · linux-setup/ · mac-setup/</b><br/>or run them natively (no Docker)"]:::graf
+    D["🚀 <b>projects/ · projects-native/</b><br/>apply it: real apps with custom metrics + dashboards"]:::good
+    A --> B
+    A -->|or| C
+    B --> D
+    C --> D
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef good fill:#43A047,stroke:#1B5E20,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef step fill:#5C6BC0,stroke:#283593,color:#fff
 ```
 
 Once the terms in Section 2 (metrics, gauges, counters, histograms, SLOs) feel familiar,

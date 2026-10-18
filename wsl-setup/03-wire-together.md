@@ -127,14 +127,25 @@ This is the same `/-/reload` endpoint used in the Docker setup — the flag `--w
 
 ## Summary — what you have now
 
-```
-WSL2
-├── prometheus  (port 9090)  — scraping itself
-│     config: /etc/prometheus/prometheus.yml
-│     data:   /var/lib/prometheus/
-└── grafana     (port 3000)  — data source: http://localhost:9090
-      config: /etc/grafana/grafana.ini
-      data:   /var/lib/grafana/
+```mermaid
+flowchart LR
+    subgraph HOST["🪟 WSL2"]
+        PC["📝 config<br/>/etc/prometheus/prometheus.yml"]:::file
+        P["Prometheus<br/>port 9090"]:::prom
+        PD[("💾 data<br/>/var/lib/prometheus/")]:::store
+        GC["📝 config<br/>/etc/grafana/grafana.ini"]:::file
+        G["Grafana<br/>port 3000"]:::graf
+        GD[("💾 data<br/>/var/lib/grafana/")]:::store
+        PC -.-> P --> PD
+        GC -.-> G --> GD
+        P -->|"scraping itself"| P
+        G -->|"data source<br/>http://localhost:9090"| P
+    end
+    style HOST fill:#F3E5F5,stroke:#8E24AA,stroke-width:2px,color:#4A148C
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
 ```
 
 Next: start the Python projects in `projects-native/` and follow their `CONNECT.md` to wire them in.

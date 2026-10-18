@@ -4,9 +4,15 @@ A small Flask app that writes **structured JSON logs**. Because the logs are alr
 they go **straight to Elasticsearch** via Filebeat — no Logstash needed. This is the simplest ELK
 pipeline and the best place to start.
 
-```
-flask-json-logger  ──writes JSON──▶  app.log  ──Filebeat──▶  Elasticsearch  ──▶  Kibana
-                                                  (Path A — no Logstash)
+```mermaid
+flowchart LR
+    APP["flask-json-logger"]:::app -->|"writes JSON"| LOG["📄 app.log"]:::file
+    LOG -->|"Filebeat<br/>(Path A — no Logstash)"| ES[("Elasticsearch")]:::es
+    ES --> KB["Kibana"]:::kb
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
 ```
 
 > **New to ELK?** Read [`../../01-fundamentals/`](../../01-fundamentals/README.md) and bring the

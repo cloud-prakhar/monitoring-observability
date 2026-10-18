@@ -144,12 +144,28 @@ examples in [`../../03-queries/`](../../03-queries/README.md).
 
 ## How it works (recap)
 
-```
-1. app.py writes a RAW text line  ──▶  /var/log/web/access.log
-2. Filebeat tails the file        ──▶  ships raw lines to logstash:5044
-3. Logstash EXTRACTS (beats input), TRANSFORMS (grok → fields, date, type-convert),
-   and LOADS (sends JSON to elasticsearch:9200, index web-access-YYYY.MM.dd)
-4. Kibana reads the index         ──▶  you search & chart structured fields
+```mermaid
+flowchart LR
+    A["1 · app.py<br/>writes a RAW text line"]:::app
+    B["2 · Filebeat<br/>tails the file"]:::beat
+    subgraph LS["3 · Logstash"]
+        direction TB
+        E["EXTRACT<br/>beats input"]:::ls
+        T["TRANSFORM<br/>grok → fields, date, type-convert"]:::ls
+        L["LOAD<br/>sends JSON to elasticsearch:9200"]:::ls
+        E --> T --> L
+    end
+    ES[("Elasticsearch<br/>index web-access-YYYY.MM.dd")]:::es
+    K["4 · Kibana<br/>you search and chart<br/>structured fields"]:::kb
+    A -->|"/var/log/web/access.log"| B
+    B -->|"ships raw lines to<br/>logstash:5044"| E
+    L --> ES
+    ES -->|"reads the index"| K
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 The difference from Project 1 is **Step 3**: Logstash sits in the middle and turns text into fields.

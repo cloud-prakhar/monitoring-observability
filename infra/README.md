@@ -7,18 +7,25 @@ Start this once and leave it running while you work on the projects.
 
 ## What this runs
 
-```
-  http://localhost:9090          http://localhost:3000
-         |                               |
-  ┌──────┴──────┐             ┌──────────┴─────────┐
-  │ Prometheus  │◀──────────▶│      Grafana        │
-  │   :9090     │  PromQL     │      :3000          │
-  └─────────────┘             └────────────────────┘
-         ▲
-         │ scrape /metrics
-         ├── flask-web-api:8081    (project 1)
-         ├── job-processor:8082    (project 2)
-         └── cache-service:8083    (project 3)
+```mermaid
+flowchart TB
+    BP["🖥️ http://localhost:9090"]:::user
+    BG["🖥️ http://localhost:3000"]:::user
+    P["Prometheus<br/>:9090"]:::prom
+    G["Grafana<br/>:3000"]:::graf
+    F["flask-web-api:8081<br/>(project 1)"]:::app
+    J["job-processor:8082<br/>(project 2)"]:::app
+    C["cache-service:8083<br/>(project 3)"]:::app
+    BP --> P
+    BG --> G
+    G <-->|PromQL| P
+    P -->|"scrape /metrics"| F
+    P -->|"scrape /metrics"| J
+    P -->|"scrape /metrics"| C
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef user fill:#8E24AA,stroke:#4A148C,color:#fff
 ```
 
 Prometheus and Grafana live on a Docker network called **`monitoring`**. Projects 1–3

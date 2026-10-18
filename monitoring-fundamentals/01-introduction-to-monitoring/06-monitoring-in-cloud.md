@@ -254,15 +254,22 @@ Application Level:
 
 The industry-standard Kubernetes monitoring setup:
 
-```
-kube-prometheus-stack (Helm chart) includes:
-  ├── Prometheus Operator
-  ├── Prometheus
-  ├── Alertmanager  
-  ├── Node Exporter (on every node)
-  ├── Kube-State-Metrics
-  ├── Grafana
-  └── Default dashboards and alert rules
+```mermaid
+flowchart LR
+    K["📦 kube-prometheus-stack<br/>(Helm chart)"]:::step
+    K --> O["Prometheus Operator"]:::prom
+    K --> P["Prometheus"]:::prom
+    K --> A["Alertmanager"]:::bad
+    K --> N["Node Exporter<br/>(on every node)"]:::app
+    K --> S["Kube-State-Metrics"]:::app
+    K --> G["Grafana"]:::graf
+    K --> D["Default dashboards<br/>and alert rules"]:::store
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef bad fill:#E53935,stroke:#B71C1C,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef step fill:#5C6BC0,stroke:#283593,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
 ```
 
 We'll deploy this in [Section 8 — Kubernetes](../../kubernetes/README.md).

@@ -135,11 +135,19 @@ INFO vs WARNING vs ERROR). For more, see [`../../03-queries/`](../../03-queries/
 
 ## How it works (recap)
 
-```
-1. app.py writes a JSON line  ──▶  /var/log/app/app.log   (shared Docker volume)
-2. Filebeat tails that file   ──▶  ships each line to elasticsearch:9200
-3. Elasticsearch stores it    ──▶  index flask-logs-YYYY.MM.dd, fully indexed
-4. Kibana reads the index     ──▶  you search & chart in Discover
+```mermaid
+flowchart LR
+    A["1 · app.py<br/>writes a JSON line"]:::app
+    B["2 · Filebeat<br/>tails that file"]:::beat
+    C[("3 · Elasticsearch<br/>index flask-logs-YYYY.MM.dd<br/>fully indexed")]:::es
+    D["4 · Kibana<br/>you search and chart<br/>in Discover"]:::kb
+    A -->|"/var/log/app/app.log<br/>(shared Docker volume)"| B
+    B -->|"ships each line to<br/>elasticsearch:9200"| C
+    C -->|"reads the index"| D
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
 ```
 
 No Logstash anywhere — the logs were already clean JSON, so Filebeat → Elasticsearch was enough.

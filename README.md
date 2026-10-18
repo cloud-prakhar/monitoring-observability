@@ -226,27 +226,31 @@ curl http://localhost:8091/order
 
 ## How the projects connect to infra
 
+```mermaid
+flowchart LR
+    subgraph NET["🌐 Docker network: monitoring — created by infra/docker-compose.yml"]
+        G["Grafana<br/>:3000"]:::graf
+        P["Prometheus<br/>:9090"]:::prom
+        F["flask-web-api<br/>:8081"]:::app
+        J["job-processor<br/>:8082"]:::app
+        C["cache-service<br/>:8083"]:::app
+        G -->|query| P
+        P -->|scrape| F
+        P -->|scrape| J
+        P -->|scrape| C
+    end
+    style NET fill:#E3F2FD,stroke:#1E88E5,stroke-width:2px,stroke-dasharray:6 4,color:#0D47A1
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
 ```
-  infra/docker-compose.yml creates:
-  ┌────────────────────────────────────────────────────────┐
-  │  Docker network: "monitoring"  (name: monitoring)      │
-  │                                                        │
-  │  ┌────────────┐    scrape    ┌──────────────────────┐  │
-  │  │ Prometheus │◀────────────│ flask-web-api  :8081  │  │
-  │  │   :9090    │◀────────────│ job-processor  :8082  │  │
-  │  └────────────┘◀────────────│ cache-service  :8083  │  │
-  │        ▲                    └──────────────────────┘  │
-  │        │ query                                        │
-  │  ┌─────┴──────┐                                       │
-  │  │  Grafana   │                                       │
-  │  │   :3000    │                                       │
-  │  └────────────┘                                       │
-  └────────────────────────────────────────────────────────┘
 
-  Each project's docker-compose.yml joins with:
-    networks:
-      monitoring:
-        external: true
+Each project's `docker-compose.yml` joins that network with:
+
+```yaml
+networks:
+  monitoring:
+    external: true
 ```
 
 The `name: monitoring` line in `infra/docker-compose.yml` is what makes this work.

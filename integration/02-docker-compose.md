@@ -155,10 +155,16 @@ Look at the `up` output above: the network is named **`integration_monitoring`**
 `monitoring`. Compose prefixes every network (and volume) it creates with the **project name**,
 which defaults to the directory the compose file lives in:
 
-```
-integration_monitoring
-        │        └── the `monitoring` name from the `networks:` block
-        └── the project name = this directory (integration/)
+```mermaid
+flowchart LR
+    PJ["<b>integration</b><br/>the project name =<br/>this directory (integration/)"]:::step
+    NW["<b>monitoring</b><br/>the network name from<br/>the networks: block"]:::app
+    R["<b>integration_monitoring</b><br/>the final network name"]:::good
+    PJ -->|"prefix"| R
+    NW -->|"_ suffix"| R
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef good fill:#43A047,stroke:#1B5E20,color:#fff
+    classDef step fill:#5C6BC0,stroke:#283593,color:#fff
 ```
 
 This is also why running the standalone `../prometheus-setup/` and `../grafana-setup/` stacks

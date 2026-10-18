@@ -124,19 +124,29 @@ Time to resolution: 5 minutes
 
 ## Monitoring is a Subset of Observability
 
-```
-┌─────────────────────────────────────────────┐
-│                 OBSERVABILITY               │
-│                                             │
-│   ┌─────────────────────────────────────┐   │
-│   │           MONITORING                │   │
-│   │   (Known failures, thresholds)      │   │
-│   └─────────────────────────────────────┘   │
-│                                             │
-│   + Logs + Traces + Profiling + Events      │
-│   + Ad-hoc investigation capability         │
-│   + Unknown unknowns                        │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph OBS["🔭 OBSERVABILITY"]
+        direction TB
+        subgraph MON["📊 MONITORING"]
+            M["Known failures<br/>thresholds"]:::prom
+        end
+        L["+ Logs"]:::es
+        T["+ Traces"]:::app
+        PR["+ Profiling"]:::user
+        E["+ Events"]:::graf
+        A["+ Ad-hoc investigation capability"]:::store
+        U["+ Unknown unknowns"]:::step
+    end
+    style OBS fill:#EDE7F6,stroke:#5E35B1,stroke-width:3px,color:#311B92
+    style MON fill:#FBE9E7,stroke:#E6522C,stroke-width:2px,color:#A33B1F
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef step fill:#5C6BC0,stroke:#283593,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
+    classDef user fill:#8E24AA,stroke:#4A148C,color:#fff
 ```
 
 **All monitoring is observability. Not all observability is monitoring.**

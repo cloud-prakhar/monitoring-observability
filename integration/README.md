@@ -13,40 +13,40 @@ The key question is: **what URL does Grafana use to reach Prometheus?**
 
 ### The wrong answer: `http://localhost:9090`
 
+```mermaid
+flowchart LR
+    subgraph GC["❌ Grafana container — its own localhost"]
+        G["Grafana"]:::graf -->|"http://localhost:9090"| X["nothing listening on :9090<br/>request fails ✗"]:::bad
+    end
+    subgraph PC["Prometheus container"]
+        P["Prometheus :9090"]:::prom
+    end
+    style GC fill:#FFEBEE,stroke:#E53935,stroke-width:2px,color:#B71C1C
+    classDef bad fill:#E53935,stroke:#B71C1C,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
 ```
-❌ Wrong:
 
-  ┌──────────────┐           ┌──────────────┐
-  │   Grafana    │──localhost─│  Prometheus  │
-  │  container   │    :9090   │  container   │
-  └──────────────┘     ✗     └──────────────┘
-
-  Each container has its own localhost.
-  Grafana's localhost = the Grafana container itself.
-  Port 9090 does not exist inside the Grafana container.
-  Request fails.
-```
+Each container has its own `localhost`. Grafana's `localhost` is the Grafana container itself,
+and port 9090 does not exist inside the Grafana container, so the request fails.
 
 ### The right answer: `http://prometheus:9090`
 
+```mermaid
+flowchart LR
+    subgraph NET["✅ Docker network: monitoring"]
+        G["Grafana container"]:::graf -->|"http://prometheus:9090"| P["Prometheus container"]:::prom
+        DNS{{"Docker built-in DNS<br/>prometheus → container IP"}}:::store
+        G -.->|"resolve 'prometheus'"| DNS
+    end
+    style NET fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#1B5E20
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
 ```
-✅ Correct:
 
-  ┌────────────────────────────────────────────────────┐
-  │              Docker network: monitoring            │
-  │                                                    │
-  │  ┌──────────────┐   prometheus:9090  ┌──────────┐ │
-  │  │   Grafana    │ ─────────────────▶ │Prometheus│ │
-  │  │  container   │                    │container │ │
-  │  └──────────────┘                    └──────────┘ │
-  │                                                    │
-  └────────────────────────────────────────────────────┘
-
-  Both containers are on the same Docker network.
-  Docker's built-in DNS resolves "prometheus" to the
-  Prometheus container's internal IP address.
-  Request succeeds.
-```
+Both containers are on the same Docker network. Docker's built-in DNS resolves `prometheus` to
+the Prometheus container's internal IP address, so the request succeeds.
 
 **The rule:** When one container needs to talk to another, use the **service name** (or
 container name) as the hostname — never `localhost`.
@@ -65,10 +65,16 @@ The **project name** defaults to the name of the directory the `docker-compose.y
 So running `docker compose up` from `integration/` (whose compose file defines a network called
 `monitoring`) produces a network named:
 
-```
-integration_monitoring
-        │        └── the network name from the `networks:` block
-        └── the project name (the directory name)
+```mermaid
+flowchart LR
+    PJ["<b>integration</b><br/>the project name<br/>(the directory name)"]:::step
+    NW["<b>monitoring</b><br/>the network name from<br/>the networks: block"]:::app
+    R["<b>integration_monitoring</b><br/>the final network name"]:::good
+    PJ -->|"prefix"| R
+    NW -->|"_ suffix"| R
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef good fill:#43A047,stroke:#1B5E20,color:#fff
+    classDef step fill:#5C6BC0,stroke:#283593,color:#fff
 ```
 
 Every service with `networks: - monitoring` is attached to it, and Docker adds a DNS entry on
@@ -83,18 +89,27 @@ network — fine on its own, but isolated from everything else.
 
 ### Why running the two standalone stacks separately breaks
 
+```bash
+docker compose -f prometheus-setup/docker-compose.yml up   # → network: prometheus-setup_default
+docker compose -f grafana-setup/docker-compose.yml   up   # → network: grafana-setup_default
 ```
-docker compose -f prometheus-setup/docker-compose.yml up   →  network: prometheus-setup_default
-docker compose -f grafana-setup/docker-compose.yml   up   →  network: grafana-setup_default
 
-  ┌─ prometheus-setup_default ─┐        ┌─ grafana-setup_default ─┐
-  │      ┌────────────┐        │        │     ┌──────────┐        │
-  │      │ Prometheus │        │        │     │  Grafana │        │
-  │      └────────────┘        │        │     └──────────┘        │
-  └────────────────────────────┘        └─────────────────────────┘
-        TWO separate islands — Grafana's DNS has no entry for "prometheus"
-        → lookup prometheus ... server misbehaving
+```mermaid
+flowchart LR
+    subgraph A["🏝️ prometheus-setup_default"]
+        P["Prometheus"]:::prom
+    end
+    subgraph B["🏝️ grafana-setup_default"]
+        G["Grafana"]:::graf
+    end
+    G --x|"lookup prometheus ...<br/>server misbehaving"| P
+    style A fill:#FBE9E7,stroke:#E6522C,stroke-width:2px,color:#A33B1F
+    style B fill:#FFF8E1,stroke:#F9A825,stroke-width:2px,color:#7A5200
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
 ```
+
+Two separate islands — Grafana's DNS has no entry for `prometheus`.
 
 Docker's DNS only resolves a name **within the same network**. Across two `_default` networks
 there is no route, so the lookup of `prometheus` fails. (See
@@ -103,13 +118,14 @@ there is no route, so the lookup of `prometheus` fails. (See
 **This `integration/` setup fixes it by design:** its one compose file defines both services
 *and* a shared `monitoring` network, so both land on `integration_monitoring` together:
 
-```
-  ┌──────────────── integration_monitoring ────────────────┐
-  │   ┌──────────┐   prometheus:9090   ┌────────────┐      │
-  │   │  Grafana │ ──────────────────▶ │ Prometheus │      │
-  │   └──────────┘   (resolved by      └────────────┘      │
-  │                   Docker DNS)                           │
-  └─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph NET["🌐 integration_monitoring"]
+        G["Grafana"]:::graf -->|"prometheus:9090<br/>(resolved by Docker DNS)"| P["Prometheus"]:::prom
+    end
+    style NET fill:#E3F2FD,stroke:#1E88E5,stroke-width:2px,stroke-dasharray:6 4,color:#0D47A1
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
 ```
 
 The takeaway: keep services that must talk to each other in **one compose file** (or on one
@@ -120,15 +136,24 @@ find each other.
 
 ## How it all fits together
 
-```
-Scrape flow:
-  Prometheus ──scrapes──▶ itself (:9090/metrics) every 15s
-  Prometheus ──stores──▶  time-series data in promdata volume
-
-Query flow:
-  Your browser ──HTTP──▶ Grafana (:3000)
-  Grafana ──PromQL──▶ Prometheus (:9090) via monitoring network
-  Grafana ──renders──▶ chart in your browser
+```mermaid
+sequenceDiagram
+    actor U as 🖥️ Your browser
+    participant G as Grafana :3000
+    participant P as Prometheus :9090
+    participant V as 💾 promdata volume
+    rect rgba(230, 82, 44, 0.15)
+    Note over P,V: Scrape flow — every 15s
+    P->>P: scrape itself (:9090/metrics)
+    P->>V: store time-series data
+    end
+    rect rgba(249, 168, 37, 0.20)
+    Note over U,P: Query flow
+    U->>G: HTTP request (open a dashboard)
+    G->>P: PromQL query via the monitoring network
+    P-->>G: query results
+    G-->>U: rendered chart in your browser
+    end
 ```
 
 ---

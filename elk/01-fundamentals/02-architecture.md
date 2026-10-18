@@ -117,21 +117,25 @@ impossible when it's just a line of text. **That transform is the whole reason L
 
 ## Where each piece runs (in this lab)
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ Docker network: "elk"                                              │
-│                                                                    │
-│   ┌────────────┐     ┌───────────┐     ┌──────────────────┐       │
-│   │  Filebeat  │────▶│ Logstash  │────▶│  Elasticsearch    │      │
-│   │ (per app)  │5044 │  :5044    │9200 │     :9200         │      │
-│   └────────────┘     │  :9600    │     └──────────────────┘       │
-│         ▲            └───────────┘              ▲                  │
-│         │ reads                                 │ queries          │
-│   ┌─────┴──────┐                          ┌─────┴──────┐          │
-│   │  your app  │                          │   Kibana   │          │
-│   │  app.log   │                          │   :5601    │          │
-│   └────────────┘                          └────────────┘          │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph NET["🌐 Docker network: elk"]
+        APP["your app<br/>writes app.log"]:::app
+        FB["Filebeat<br/>(one per app)"]:::beat
+        LS["Logstash<br/>:5044 Beats input<br/>:9600 monitoring API"]:::ls
+        ES[("Elasticsearch<br/>:9200")]:::es
+        KB["Kibana<br/>:5601"]:::kb
+        APP -->|"read by"| FB
+        FB -->|":5044"| LS
+        LS -->|":9200"| ES
+        KB -->|queries| ES
+    end
+    style NET fill:#E3F2FD,stroke:#1E88E5,stroke-width:2px,stroke-dasharray:6 4,color:#0D47A1
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 All five containers join one Docker network called `elk` so they can reach each other by name

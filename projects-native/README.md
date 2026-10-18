@@ -109,15 +109,22 @@ projects-native/
 
 ## How they connect
 
-```
-  ┌──────────────────────────┐        scrape localhost:8084  system-monitor      (Linux)
-  │  native Prometheus :9090  │◀───────  localhost:8085  url-health-checker  (any OS)
-  │  (config: see below)      │◀───────  localhost:8086  mac-system-monitor  (macOS)
-  └────────────┬─────────────┘◀───────  localhost:8087  linux-system-monitor(Linux)
-               │ query
-        ┌──────┴───────┐
-        │ native Grafana│  :3000
-        └──────────────┘
+```mermaid
+flowchart LR
+    G["native Grafana<br/>:3000"]:::graf
+    P["native Prometheus<br/>:9090<br/>(config: see below)"]:::prom
+    A["system-monitor<br/>(Linux)"]:::app
+    B["url-health-checker<br/>(any OS)"]:::app
+    C["mac-system-monitor<br/>(macOS)"]:::app
+    D["linux-system-monitor<br/>(Linux)"]:::app
+    G -->|query| P
+    P -->|"scrape localhost:8084"| A
+    P -->|"scrape localhost:8085"| B
+    P -->|"scrape localhost:8086"| C
+    P -->|"scrape localhost:8087"| D
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
 ```
 
 Edit the Prometheus config, add the project's job, then reload:

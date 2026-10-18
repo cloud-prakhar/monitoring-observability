@@ -17,19 +17,17 @@
 A standalone Prometheus instance running locally at **http://localhost:9090**, scraping
 its own metrics as a first target.
 
-```
-Your browser
-     |
-     | http://localhost:9090
-     v
-+------------------+
-|   Prometheus     |  <-- scrapes itself at /metrics every 15s
-|   container      |
-|   port 9090      |
-+------------------+
-         |
-         v
-  [promdata volume]   <-- time-series database persisted here
+```mermaid
+flowchart TB
+    B["🖥️ Your browser"]:::user
+    P["Prometheus container<br/>port 9090"]:::prom
+    V[("💾 promdata volume<br/>time-series database persisted here")]:::store
+    B -->|"http://localhost:9090"| P
+    P -->|"scrapes itself at /metrics every 15s"| P
+    P --> V
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
+    classDef user fill:#8E24AA,stroke:#4A148C,color:#fff
 ```
 
 ---

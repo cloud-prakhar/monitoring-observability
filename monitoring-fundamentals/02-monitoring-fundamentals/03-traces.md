@@ -8,24 +8,25 @@
 
 A trace represents the **complete journey of one request** through all the services it touches.
 
-```
-User Request: GET /api/checkout
-  │
-  ├── [12ms] API Gateway
-  │     ├── Auth service call: 8ms ✅
-  │     └── Rate limiter check: 2ms ✅
-  │
-  ├── [45ms] Cart Service
-  │     └── Redis cache lookup: 5ms ✅
-  │
-  ├── [230ms] Payment Service ← SLOW!
-  │     ├── Stripe API call: 180ms ⚠️
-  │     └── Database write: 45ms ✅
-  │
-  └── [8ms] Email Service
-        └── SendGrid API: 6ms ✅
-
-Total: 295ms
+```mermaid
+gantt
+    title User Request GET /api/checkout — total 295ms
+    dateFormat x
+    axisFormat %L ms
+    section API Gateway 12ms
+    API Gateway                 :active, 0, 12
+    Auth service call 8ms ✅     :done, 1, 9
+    Rate limiter check 2ms ✅    :done, 9, 11
+    section Cart Service 45ms
+    Cart Service                :active, 12, 57
+    Redis cache lookup 5ms ✅    :done, 14, 19
+    section Payment Service 230ms — SLOW!
+    Payment Service ← SLOW!     :crit, 57, 287
+    Stripe API call 180ms ⚠️     :crit, 59, 239
+    Database write 45ms ✅       :done, 240, 285
+    section Email Service 8ms
+    Email Service               :active, 287, 295
+    SendGrid API 6ms ✅          :done, 288, 294
 ```
 
 Without traces, you'd see "checkout is slow" but not know it's the Stripe API call causing it.
@@ -34,30 +35,26 @@ Without traces, you'd see "checkout is slow" but not know it's the Stripe API ca
 
 ## Trace Anatomy
 
-```
-Trace ID: abc-123-xyz (unique per request)
-  │
-  └── Span: API Gateway (root span)
-        Duration: 295ms
-        Tags: {http.method=GET, http.url=/api/checkout}
-        │
-        ├── Span: Auth Service
-        │     Duration: 8ms
-        │     Parent: API Gateway
-        │
-        ├── Span: Cart Service
-        │     Duration: 45ms
-        │     Parent: API Gateway
-        │     │
-        │     └── Span: Redis GET
-        │           Duration: 5ms
-        │
-        └── Span: Payment Service
-              Duration: 230ms
-              Parent: API Gateway
-              │
-              └── Span: Stripe API
-                    Duration: 180ms
+```mermaid
+flowchart TB
+    T["🆔 Trace ID: abc-123-xyz<br/>(unique per request)"]:::step
+    GW["<b>Span: API Gateway</b> (root span)<br/>Duration: 295ms<br/>Tags: http.method=GET, http.url=/api/checkout"]:::app
+    AU["<b>Span: Auth Service</b><br/>Duration: 8ms<br/>Parent: API Gateway"]:::good
+    CA["<b>Span: Cart Service</b><br/>Duration: 45ms<br/>Parent: API Gateway"]:::good
+    RE["<b>Span: Redis GET</b><br/>Duration: 5ms"]:::store
+    PA["<b>Span: Payment Service</b><br/>Duration: 230ms<br/>Parent: API Gateway"]:::bad
+    ST["<b>Span: Stripe API</b><br/>Duration: 180ms"]:::bad
+    T --> GW
+    GW --> AU
+    GW --> CA
+    GW --> PA
+    CA --> RE
+    PA --> ST
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef bad fill:#E53935,stroke:#B71C1C,color:#fff
+    classDef good fill:#43A047,stroke:#1B5E20,color:#fff
+    classDef step fill:#5C6BC0,stroke:#283593,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
 ```
 
 ---

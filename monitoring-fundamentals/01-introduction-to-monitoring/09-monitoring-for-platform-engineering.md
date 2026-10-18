@@ -133,18 +133,30 @@ graph TB
 
 Grafana supports multiple **organizations** — each team gets their own isolated workspace:
 
-```
-Organization: Platform Team
-  ├── Dashboards: Kubernetes cluster overview, etcd health
-  └── Alerts: Platform-level alerts
-
-Organization: Payment Team
-  ├── Dashboards: Payment service metrics, transaction rates
-  └── Alerts: Payment-specific alerts
-
-Organization: Search Team
-  ├── Dashboards: Search query performance, index health
-  └── Alerts: Search-specific alerts
+```mermaid
+flowchart TB
+    GR["Grafana instance"]:::graf
+    subgraph PT["🏢 Organization: Platform Team"]
+        PT1["Dashboards: Kubernetes cluster overview, etcd health"]:::app
+        PT2["Alerts: Platform-level alerts"]:::bad
+    end
+    subgraph PY["🏢 Organization: Payment Team"]
+        PY1["Dashboards: Payment service metrics, transaction rates"]:::app
+        PY2["Alerts: Payment-specific alerts"]:::bad
+    end
+    subgraph SE["🏢 Organization: Search Team"]
+        SE1["Dashboards: Search query performance, index health"]:::app
+        SE2["Alerts: Search-specific alerts"]:::bad
+    end
+    GR --> PT
+    GR --> PY
+    GR --> SE
+    style PT fill:#E8EAF6,stroke:#5C6BC0,stroke-width:2px,color:#283593
+    style PY fill:#E0F2F1,stroke:#00897B,stroke-width:2px,color:#004D40
+    style SE fill:#FCE4EC,stroke:#F04E98,stroke-width:2px,color:#AD1457
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef bad fill:#E53935,stroke:#B71C1C,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
 ```
 
 **Key Grafana RBAC roles for platform teams:**

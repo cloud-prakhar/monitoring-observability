@@ -199,11 +199,21 @@ output.logstash:
 
 ## How they all reference each other
 
-```
-filebeat.yml      ─── points to ──▶  logstash:5044   OR   elasticsearch:9200
-logstash pipeline ─── points to ──▶  elasticsearch:9200
-kibana.yml        ─── points to ──▶  elasticsearch:9200
-elasticsearch     ─── the source of truth; everyone reads/writes here
+```mermaid
+flowchart LR
+    FBY["filebeat.yml"]:::beat
+    LSP["logstash pipeline<br/>(logstash.conf)"]:::ls
+    KBY["kibana.yml"]:::kb
+    LS5["logstash:5044"]:::ls
+    ES[("elasticsearch:9200<br/>the source of truth —<br/>everyone reads/writes here")]:::es
+    FBY -->|"points to"| LS5
+    FBY -.->|"OR points to"| ES
+    LSP -->|"points to"| ES
+    KBY -->|"points to"| ES
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 Every arrow uses a **container name** (`elasticsearch`, `logstash`) instead of `localhost`,

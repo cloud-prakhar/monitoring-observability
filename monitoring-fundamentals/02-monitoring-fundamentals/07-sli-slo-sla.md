@@ -165,21 +165,25 @@ avg_over_time(
 
 Your SLO dashboard should show:
 
-```
-┌─────────────────────────────────────────────────────┐
-│  SERVICE: User API                    Period: 30 days │
-├──────────────────┬──────────────────┬────────────────┤
-│  Availability    │  Latency SLO     │  Error Budget  │
-│  99.97%          │  99.8%           │  70% remaining │
-│  Target: 99.9%   │  Target: 99.5%   │                │
-│  ✅ OK           │  ✅ OK           │  🟢 Healthy    │
-├──────────────────┴──────────────────┴────────────────┤
-│  Availability over last 30 days [graph]              │
-│  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                │
-├──────────────────────────────────────────────────────┤
-│  Error rate over last 30 days [graph]               │
-│  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                │
-└──────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph DASH["📊 SERVICE: User API — Period: 30 days"]
+        direction TB
+        subgraph ROW[" "]
+            direction LR
+            A["Availability<br/><b>99.97%</b><br/>Target: 99.9%<br/>✅ OK"]:::good
+            L["Latency SLO<br/><b>99.8%</b><br/>Target: 99.5%<br/>✅ OK"]:::good
+            E["Error Budget<br/><b>70% remaining</b><br/>🟢 Healthy"]:::store
+        end
+        G1["📈 Availability over last 30 days (graph)"]:::app
+        G2["📉 Error rate over last 30 days (graph)"]:::graf
+        ROW ~~~ G1 ~~~ G2
+    end
+    style DASH fill:#ECEFF1,stroke:#546E7A,stroke-width:2px,color:#263238
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef good fill:#43A047,stroke:#1B5E20,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
 ```
 
 ---

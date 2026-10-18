@@ -26,14 +26,21 @@ Each dashboard should have one clear audience and question it answers.
 
 Users scan dashboards in an F-pattern — top left first:
 
-```
-┌──────────────────────────────────────────────────────┐
-│  CRITICAL INFO (top-left)  │  SUPPORTING INFO        │
-│  Current status stats      │  Time series graphs     │   
-├──────────────────────────────────────────────────────┤
-│  DETAIL (below the fold)                             │
-│  Breakdown by service, endpoint, error type          │
-└──────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph TOP["Top of the dashboard — seen first"]
+        direction LR
+        C["<b>1 · CRITICAL INFO</b> (top-left)<br/>Current status stats"]:::bad
+        S["<b>2 · SUPPORTING INFO</b><br/>Time series graphs"]:::graf
+    end
+    subgraph BOT["Below the fold"]
+        D["<b>3 · DETAIL</b><br/>Breakdown by service, endpoint, error type"]:::app
+    end
+    C -->|"eye moves right"| S
+    S -->|"then down"| D
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef bad fill:#E53935,stroke:#B71C1C,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
 ```
 
 ### 3. Consistent Time Ranges

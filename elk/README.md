@@ -36,19 +36,23 @@ milliseconds. That is the entire point: **centralized, searchable logs.**
 
 ## Learn in this order
 
-```
-1. 01-fundamentals/     ← READ FIRST: what ELK is, how it works, the config files (no commands)
-       │
-       ▼
-2. 02-setup/            ← install the whole stack with Docker (CLI first, then Compose)
-       │
-       ▼
-3. projects/            ← two hands-on apps that ship real logs into ELK
-       │  01-flask-json-logger        (App → Filebeat → Elasticsearch → Kibana)
-       │  02-web-access-log-analyzer  (App → Filebeat → Logstash → Elasticsearch → Kibana)
-       │
-       ▼
-4. 03-queries/          ← search and analyze your logs (Kibana KQL + Elasticsearch Query DSL)
+```mermaid
+flowchart TB
+    S1["<b>1 · 01-fundamentals/</b><br/>READ FIRST: what ELK is, how it works,<br/>the config files (no commands)"]:::user
+    S2["<b>2 · 02-setup/</b><br/>install the whole stack with Docker<br/>(CLI first, then Compose)"]:::beat
+    S3["<b>3 · projects/</b><br/>two hands-on apps that ship real logs into ELK"]:::good
+    P1["01-flask-json-logger<br/>App → Filebeat → Elasticsearch → Kibana"]:::es
+    P2["02-web-access-log-analyzer<br/>App → Filebeat → Logstash → Elasticsearch → Kibana"]:::ls
+    S4["<b>4 · 03-queries/</b><br/>search and analyze your logs<br/>(Kibana KQL + Elasticsearch Query DSL)"]:::kb
+    S1 --> S2 --> S3 --> S4
+    S3 -.- P1
+    S3 -.- P2
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef good fill:#43A047,stroke:#1B5E20,color:#fff
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
+    classDef user fill:#8E24AA,stroke:#4A148C,color:#fff
 ```
 
 ---

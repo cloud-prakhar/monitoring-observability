@@ -25,8 +25,13 @@ it to ELK. This separation means:
 
 ### Way 1 — App → file → Filebeat (recommended, used in both projects)
 
-```
-app.py  ──writes──▶  app.log  ──tailed by──▶  Filebeat  ──ships──▶  ELK
+```mermaid
+flowchart LR
+    APP["app.py"]:::app -->|writes| LOG["📄 app.log"]:::file -->|"tailed by"| FB["Filebeat"]:::beat -->|ships| ELK[("ELK")]:::es
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
 ```
 
 The app writes to a log file. Filebeat tails it. **This is the standard, robust pattern** and
@@ -34,8 +39,12 @@ the one this lab uses. The app and Filebeat share a folder (a Docker volume).
 
 ### Way 2 — App → Logstash directly (over the network)
 
-```
-app.py  ──HTTP/TCP──▶  Logstash  ──▶  Elasticsearch
+```mermaid
+flowchart LR
+    APP["app.py"]:::app -->|"HTTP/TCP"| LS["Logstash"]:::ls --> ES[("Elasticsearch")]:::es
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 The app opens a network connection and sends logs straight to Logstash (or even straight to
@@ -66,12 +75,18 @@ For logs to flow, each hop must be able to reach the next one over the network. 
 means everything must be on the **same Docker network** and refer to each other by **container
 name**.
 
-```
-┌─────────────────────── Docker network: "elk" ───────────────────────┐
-│                                                                      │
-│  app ──▶ Filebeat ──▶ Logstash:5044 ──▶ Elasticsearch:9200 ◀── Kibana│
-│                                                                      │
-└──────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph NET["🌐 Docker network: elk"]
+        APP["app"]:::app --> FB["Filebeat"]:::beat --> LS["Logstash:5044"]:::ls --> ES[("Elasticsearch:9200")]:::es
+        KB["Kibana"]:::kb --> ES
+    end
+    style NET fill:#E3F2FD,stroke:#1E88E5,stroke-width:2px,stroke-dasharray:6 4,color:#0D47A1
+    classDef app fill:#1E88E5,stroke:#0D47A1,color:#fff
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 ### The ports that must be open between components

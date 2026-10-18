@@ -124,14 +124,25 @@ brew services restart prometheus
 
 ## Summary — what you have now
 
-```
-macOS  (Homebrew prefix = $(brew --prefix))
-├── prometheus  (port 9090)  — scraping itself
-│     config: $(brew --prefix)/etc/prometheus.yml
-│     data:   $(brew --prefix)/var/prometheus/
-└── grafana     (port 3000)  — data source: http://localhost:9090
-      config: $(brew --prefix)/etc/grafana/grafana.ini
-      data:   $(brew --prefix)/var/lib/grafana/
+```mermaid
+flowchart LR
+    subgraph HOST["🍎 macOS — Homebrew prefix = $(brew --prefix)"]
+        PC["📝 config<br/>$(brew --prefix)/etc/prometheus.yml"]:::file
+        P["Prometheus<br/>port 9090"]:::prom
+        PD[("💾 data<br/>$(brew --prefix)/var/prometheus/")]:::store
+        GC["📝 config<br/>$(brew --prefix)/etc/grafana/grafana.ini"]:::file
+        G["Grafana<br/>port 3000"]:::graf
+        GD[("💾 data<br/>$(brew --prefix)/var/lib/grafana/")]:::store
+        PC -.-> P --> PD
+        GC -.-> G --> GD
+        P -->|"scraping itself"| P
+        G -->|"data source<br/>http://localhost:9090"| P
+    end
+    style HOST fill:#F3E5F5,stroke:#8E24AA,stroke-width:2px,color:#4A148C
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef store fill:#00897B,stroke:#004D40,color:#fff
 ```
 
 Next: start `projects-native/06-mac-system-monitor/` and follow its `CONNECT.md` to wire it in.

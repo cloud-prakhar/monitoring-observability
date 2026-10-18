@@ -41,14 +41,24 @@ Beats is a *family* of shippers — each specializes in one kind of data:
 
 ## How Filebeat works
 
-```
-   app.log                Filebeat                    destination
- ┌──────────┐         ┌──────────────┐          ┌─────────────────────┐
- │ line 1   │         │  1. tail the │          │ Logstash (:5044)    │
- │ line 2   │ ──read─▶│     file     │ ──ship──▶│   OR                │
- │ line 3 ◀─┼─cursor  │  2. remember │          │ Elasticsearch(:9200)│
- │ line 4   │         │     position │          └─────────────────────┘
- └──────────┘         └──────────────┘
+```mermaid
+flowchart LR
+    LOG["📄 app.log<br/>line 1<br/>line 2<br/>line 3 ◀ cursor<br/>line 4"]:::file
+    subgraph FBG["Filebeat"]
+        T["1 · tail the file"]:::beat
+        M["2 · remember position<br/>(the cursor)"]:::beat
+        T --> M
+    end
+    LS["Logstash<br/>:5044"]:::ls
+    ES[("Elasticsearch<br/>:9200")]:::es
+    LOG -->|read| T
+    M -.->|cursor| LOG
+    FBG -->|ship| LS
+    FBG -.->|"OR ship"| ES
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 1. **Tail the file.** Filebeat watches the log file and reads new lines as they're written
@@ -64,12 +74,21 @@ Beats is a *family* of shippers — each specializes in one kind of data:
 
 ## The two shipping paths (you'll do both)
 
-```
-Path A  (Project 1 — clean JSON logs, no parsing needed):
-    app.log ──▶ Filebeat ──────────────▶ Elasticsearch ──▶ Kibana
-
-Path B  (Project 2 — messy logs that need parsing):
-    access.log ──▶ Filebeat ──▶ Logstash (ETL) ──▶ Elasticsearch ──▶ Kibana
+```mermaid
+flowchart TB
+    subgraph A["Path A — Project 1: clean JSON logs, no parsing needed"]
+        direction LR
+        A1["📄 app.log"]:::file --> A2["Filebeat"]:::beat --> A3[("Elasticsearch")]:::es --> A4["Kibana"]:::kb
+    end
+    subgraph B["Path B — Project 2: messy logs that need parsing"]
+        direction LR
+        B1["📄 access.log"]:::file --> B2["Filebeat"]:::beat --> B3["Logstash (ETL)"]:::ls --> B4[("Elasticsearch")]:::es --> B5["Kibana"]:::kb
+    end
+    classDef beat fill:#0077CC,stroke:#004C80,color:#fff
+    classDef es fill:#00BFB3,stroke:#00796B,color:#000
+    classDef file fill:#78909C,stroke:#37474F,color:#fff
+    classDef kb fill:#F04E98,stroke:#AD1457,color:#fff
+    classDef ls fill:#FEC514,stroke:#B58900,color:#000
 ```
 
 - **Use Path A when** your app already logs clean JSON. Simpler, fewer moving parts.

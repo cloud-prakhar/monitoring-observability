@@ -13,26 +13,28 @@
 Before running any commands, read this carefully. It explains the most common
 integration mistake.
 
-```
-WRONG mental model:
-                                 ┌──────────────┐
-  Your browser → localhost:3000  │   Grafana    │ → http://localhost:9090 ✗
-                                 └──────────────┘
-                                        ≠
-                                 ┌──────────────┐
-                                 │  Prometheus  │
-                                 └──────────────┘
-
-RIGHT mental model:
-                                 ┌──────────────────────────────────────────┐
-                                 │           Docker network: monitoring     │
-                                 │                                          │
-  Your browser → localhost:3000  │  ┌──────────┐       ┌─────────────┐    │
-                                 │  │  Grafana │──────▶│  Prometheus │    │
-                                 │  │          │ :9090  │             │    │
-                                 │  └──────────┘       └─────────────┘    │
-                                 │                                          │
-                                 └──────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph WRONG["❌ WRONG mental model"]
+        direction LR
+        WB["🖥️ Your browser"]:::user -->|"localhost:3000"| WG["Grafana"]:::graf
+        WG -->|"http://localhost:9090 ✗"| WX["Grafana's own localhost<br/>(nothing on :9090)"]:::bad
+        WP["Prometheus<br/>(not reachable this way)"]:::prom
+    end
+    subgraph RIGHT["✅ RIGHT mental model"]
+        direction LR
+        RB["🖥️ Your browser"]:::user -->|"localhost:3000"| RG
+        subgraph NET["🌐 Docker network: monitoring"]
+            RG["Grafana"]:::graf -->|":9090"| RP["Prometheus"]:::prom
+        end
+    end
+    style WRONG fill:#FFEBEE,stroke:#E53935,stroke-width:2px,color:#B71C1C
+    style RIGHT fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#1B5E20
+    style NET fill:#E3F2FD,stroke:#1E88E5,stroke-width:2px,stroke-dasharray:6 4,color:#0D47A1
+    classDef bad fill:#E53935,stroke:#B71C1C,color:#fff
+    classDef graf fill:#F9A825,stroke:#C17900,color:#000
+    classDef prom fill:#E6522C,stroke:#A33B1F,color:#fff
+    classDef user fill:#8E24AA,stroke:#4A148C,color:#fff
 ```
 
 **Why `localhost` fails between containers:**
