@@ -83,34 +83,19 @@ The most important document in an SRE organization is the **Error Budget Policy*
 
 ### Example Error Budget Policy
 
-```
-Error Budget Policy: User API Service
-Last Updated: 2024-01-15
-Owner: Platform Team
+**Error Budget Policy: User API Service**
 
-Budget Thresholds and Actions:
+Last Updated: 2024-01-15 · Owner: Platform Team
 
-┌─────────────────┬─────────────────────────────────────────────────┐
-│ Budget Remaining│ Required Action                                  │
-├─────────────────┼─────────────────────────────────────────────────┤
-│ > 50%           │ Full deployment velocity. All planned changes OK │
-├─────────────────┼─────────────────────────────────────────────────┤
-│ 25% - 50%       │ No risky deployments. All changes need review.   │
-│                 │ Incident retrospective required for any incident │
-├─────────────────┼─────────────────────────────────────────────────┤
-│ 10% - 25%       │ No new feature deployments.                      │
-│                 │ Bug fixes and security patches only.             │
-│                 │ Team must present reliability improvement plan.  │
-├─────────────────┼─────────────────────────────────────────────────┤
-│ 0% - 10%        │ Freeze all non-critical deployments.             │
-│                 │ Engineering team focuses on reliability work.    │
-│                 │ Weekly SLO review with leadership.               │
-├─────────────────┼─────────────────────────────────────────────────┤
-│ Exhausted (0%)  │ Feature freeze until next month's budget resets. │
-│                 │ Mandatory postmortem for root cause.             │
-│                 │ Reliability sprint: no feature work.             │
-└─────────────────┴─────────────────────────────────────────────────┘
-```
+**Budget thresholds and actions:**
+
+| Budget Remaining | Required Action |
+|------------------|-----------------|
+| 🟢 > 50% | Full deployment velocity. All planned changes OK. |
+| 🟡 25% – 50% | No risky deployments. All changes need review.<br/>Incident retrospective required for any incident. |
+| 🟠 10% – 25% | No new feature deployments.<br/>Bug fixes and security patches only.<br/>Team must present reliability improvement plan. |
+| 🔴 0% – 10% | Freeze all non-critical deployments.<br/>Engineering team focuses on reliability work.<br/>Weekly SLO review with leadership. |
+| ⛔ Exhausted (0%) | Feature freeze until next month's budget resets.<br/>Mandatory postmortem for root cause.<br/>Reliability sprint: no feature work. |
 
 ---
 
