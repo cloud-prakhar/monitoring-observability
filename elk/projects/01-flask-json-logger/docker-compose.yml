@@ -1,0 +1,53 @@
+# docker-compose.yml — ELK Project 1 (Flask JSON Logger)
+#
+# Runs TWO containers that share a log folder:
+#   1. flask-json-logger  — the app; writes JSON logs to /var/log/app/app.log
+#   2. filebeat           — tails that file and ships the lines to Elasticsearch
+#
+# Both join the pre-existing 'elk' network so Filebeat can reach elasticsearch:9200.
+#
+# Prerequisite: the ELK stack must be running (docker compose up -d in elk/02-setup/).
+#
+# Start:   docker compose up -d --build
+# Stop:    docker compose down
+# Wipe:    docker compose down -v   (also clears the shared app-logs volume)
+
+services:
+
+  flask-json-logger:
+    build: ./app
+    container_name: flask-json-logger
+    restart: unless-stopped
+    environment:
+      - LOG_FILE=/var/log/app/app.log
+    ports:
+      - "8091:8091"            # so you can hit the app from your browser/curl
+    volumes:
+      - applogs:/var/log/app   # the app WRITES logs here
+    networks:
+      - elk
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.17.0
+    container_name: filebeat-json-logger
+    restart: unless-stopped
+    # --strict.perms=false: accept the bind-mounted config without the strict
+    # "config file must be owned by root" check that Filebeat enforces by default.
+    command: ["filebeat", "-e", "--strict.perms=false"]
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - applogs:/var/log/app:ro   # filebeat READS the same logs (read-only)
+    depends_on:
+      - flask-json-logger
+    networks:
+      - elk
+
+volumes:
+  applogs:                   # shared between the app (writer) and filebeat (reader)
+
+networks:
+  elk:
+    # external: true — join the 'elk' network created by elk/02-setup/.
+    # Start 02-setup first or this fails with "network elk not found".
+    external: true

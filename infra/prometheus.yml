@@ -27,25 +27,25 @@ scrape_configs:
   # Project 1 — Flask Web API (port 8081)
   # Uncomment after: cd projects/01-flask-web-api && docker compose up -d --build
   # ---------------------------------------------------------------------------
-  # - job_name: "flask-web-api"
-  #   static_configs:
-  #     - targets: ["flask-web-api:8081"]
+  - job_name: "flask-web-api"
+    static_configs:
+      - targets: ["flask-web-api:8081"]
 
   # ---------------------------------------------------------------------------
   # Project 2 — Job Processor (port 8082)
   # Uncomment after: cd projects/02-job-processor && docker compose up -d --build
   # ---------------------------------------------------------------------------
-  # - job_name: "job-processor"
-  #   static_configs:
-  #     - targets: ["job-processor:8082"]
+  - job_name: "job-processor"
+    static_configs:
+      - targets: ["job-processor:8082"]
 
   # ---------------------------------------------------------------------------
   # Project 3 — Cache Service (port 8083)
   # Uncomment after: cd projects/03-cache-service && docker compose up -d --build
   # ---------------------------------------------------------------------------
-  # - job_name: "cache-service"
-  #   static_configs:
-  #     - targets: ["cache-service:8083"]
+  - job_name: "cache-service"
+    static_configs:
+      - targets: ["cache-service:8083"]
 
   # ---------------------------------------------------------------------------
   # Projects 4 & 5 (System Monitor, URL Health Checker) are NATIVE-ONLY.

@@ -1,0 +1,16 @@
+# elk/02-setup/config/logstash.yml
+#
+# Logstash GLOBAL settings (not the pipeline — the ETL logic lives in pipeline/logstash.conf).
+# Mounted into the container at /usr/share/logstash/config/logstash.yml.
+
+# Listen on all interfaces so the monitoring API on :9600 is reachable from the host.
+http.host: "0.0.0.0"
+
+# Keep this lab simple — don't ship Logstash's own internal stats anywhere.
+xpack.monitoring.enabled: false
+
+# Use the classic (flat) field names for grok patterns like COMBINEDAPACHELOG —
+# e.g. clientip, verb, request, response, bytes, agent.
+# Logstash 8.x otherwise defaults to ECS field names (http.response.status_code, url.original,
+# source.address, ...), which would not match the field names used in the pipeline + docs.
+pipeline.ecs_compatibility: disabled

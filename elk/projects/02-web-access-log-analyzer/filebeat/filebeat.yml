@@ -1,0 +1,20 @@
+# filebeat.yml — ELK Project 2 (Web Access Log Analyzer)
+#
+# This tells Filebeat WHAT to read (raw access-log lines) and WHERE to send them
+# (to LOGSTASH, not Elasticsearch — because these raw lines need parsing first).
+#
+# Path B:  access.log  ──Filebeat──▶  Logstash (grok ETL)  ──▶  Elasticsearch
+
+filebeat.inputs:
+  - type: filestream            # tail a continuously-growing file
+    id: web-access-logs
+    paths:
+      - /var/log/web/*.log      # the shared volume the app writes raw access logs to
+    # NOTE: no ndjson parser here — these lines are plain text, not JSON.
+    # Filebeat ships them as-is and lets Logstash do the parsing.
+
+# ---- OUTPUT: send to Logstash (Path B) so it can grok-parse the raw lines ----
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info

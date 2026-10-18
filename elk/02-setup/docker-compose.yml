@@ -1,0 +1,84 @@
+# elk/02-setup/docker-compose.yml
+#
+# The shared ELK Stack: Elasticsearch + Logstash + Kibana.
+# Start this ONCE. Both projects connect to the 'elk' network it creates.
+#
+# Start:  docker compose up -d
+# Check:  docker compose ps        (wait until elasticsearch is "healthy")
+# Stop:   docker compose down      (keeps the esdata volume — your logs survive)
+# Wipe:   docker compose down -v   (deletes the volume — fresh, empty Elasticsearch)
+#
+# All images are pinned to the same version so the three pieces always match.
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      # Run as a single node — no clustering, perfect for a laptop.
+      - discovery.type=single-node
+      # Turn OFF security (no passwords/TLS). LOCAL LEARNING ONLY — never in production.
+      - xpack.security.enabled=false
+      # Give the JVM 512MB of heap (min = max avoids resize pauses). Raise if you have RAM.
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=elk-lab
+    ports:
+      - "9200:9200"   # REST API — store & query logs
+    volumes:
+      # Named volume keeps your indexed logs across restarts (like promdata for Prometheus).
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      # Kibana/Logstash wait for this before fully starting.
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - elk
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.17.0
+    container_name: logstash
+    restart: unless-stopped
+    volumes:
+      # Global settings + the ETL pipeline. Edit pipeline/logstash.conf to change parsing.
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./config/pipeline:/usr/share/logstash/pipeline:ro
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+    ports:
+      - "5044:5044"   # Beats input — where Filebeat sends logs
+      - "9600:9600"   # Logstash monitoring API (health checks)
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.0
+    container_name: kibana
+    restart: unless-stopped
+    environment:
+      # Kibana is just a front-end — it reads everything from Elasticsearch.
+      # Note the container NAME, not localhost (they share the 'elk' network).
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"   # the web UI you open in your browser
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk
+
+volumes:
+  esdata:
+
+networks:
+  elk:
+    # name: elk creates the network with EXACTLY this name. Without it Docker would
+    # call it "02-setup_elk" and the external: true reference in each project would fail.
+    name: elk
+    driver: bridge

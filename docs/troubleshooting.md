@@ -12,6 +12,7 @@ specific commands to diagnose and fix the problem.
 2. [Port already in use](#2-port-already-in-use)
 3. [Container exits immediately after starting](#3-container-exits-immediately-after-starting)
 4. [Grafana cannot reach Prometheus — the localhost trap](#4-grafana-cannot-reach-prometheus--the-localhost-trap)
+   - [Variant — `server misbehaving`: containers on separate networks](#variant--server-misbehaving-containers-on-separate-networks)
 5. [Prometheus targets show as DOWN](#5-prometheus-targets-show-as-down)
 6. [Grafana shows "No data" on panels](#6-grafana-shows-no-data-on-panels)
 7. [Provisioned data source or dashboard not appearing](#7-provisioned-data-source-or-dashboard-not-appearing)
@@ -24,6 +25,7 @@ specific commands to diagnose and fix the problem.
 14. [external network "monitoring" not found](#14-external-network-monitoring-not-found)
 15. [How to read logs effectively](#15-how-to-read-logs-effectively)
 16. [Full reset — start from scratch](#16-full-reset--start-from-scratch)
+17. [ELK Stack issues (Elasticsearch / Logstash / Kibana / Filebeat)](#17-elk-stack-issues)
 
 ---
 
@@ -334,6 +336,110 @@ If you see `localhost`, change it to `prometheus` and restart Grafana:
 ```bash
 docker compose restart grafana
 ```
+
+---
+
+### Variant — `server misbehaving`: containers on separate networks
+
+This is a *different* failure from the localhost trap above. Here the URL is already
+correct (`http://prometheus:9090`), but the lookup of the name `prometheus` itself fails.
+
+#### Symptom
+
+In Grafana → Connections → Data sources → Prometheus → Save & test:
+
+```
+Post "http://prometheus:9090/api/v1/query": dial tcp: lookup prometheus on
+127.0.0.11:53: server misbehaving
+```
+
+The tell-tale part is **`lookup prometheus on 127.0.0.11:53`**. `127.0.0.11` is Docker's
+built-in DNS server inside the container. The error means Grafana asked Docker's DNS to
+resolve the name `prometheus` and got nothing back.
+
+#### Root cause
+
+Docker's embedded DNS only resolves a container's name **for other containers on the same
+network**. If Grafana and Prometheus are on *different* networks, Docker's DNS has no entry
+for `prometheus` from Grafana's point of view, so the lookup fails with `server misbehaving`.
+
+The usual way to end up here is starting the two tools from their **standalone** directories:
+
+```bash
+# This creates TWO isolated networks — the trap:
+docker compose -f prometheus-setup/docker-compose.yml up -d   # → prometheus-setup_default
+docker compose -f grafana-setup/docker-compose.yml up -d      # → grafana-setup_default
+```
+
+Each standalone `docker-compose.yml` defines only one service, so Compose gives each its own
+`<dir>_default` network. The containers can't see each other by name.
+
+> The standalone `prometheus-setup/` and `grafana-setup/` stacks are for learning each tool
+> **in isolation**. To run them *together*, use `integration/` (or later `infra/`), whose
+> single compose file puts both on one shared `monitoring` network.
+
+#### Diagnosis
+
+```bash
+# Show each running container and the network(s) it is attached to:
+docker ps --format 'table {{.Names}}\t{{.Networks}}'
+```
+
+Problem looks like this — two different networks:
+```
+NAMES        NETWORKS
+grafana      grafana-setup_default
+prometheus   prometheus-setup_default
+```
+
+Fixed looks like this — one shared network:
+```
+NAMES        NETWORKS
+grafana      integration_monitoring
+prometheus   integration_monitoring
+```
+
+#### Fix — Option A (recommended): run the integration stack
+
+Tear down the two standalone stacks (this frees the `prometheus`/`grafana` names; your named
+volumes are preserved because there is no `-v` flag), then bring both up together:
+
+```bash
+docker compose -f prometheus-setup/docker-compose.yml down
+docker compose -f grafana-setup/docker-compose.yml down
+
+cd integration
+docker compose up -d
+```
+
+#### Fix — Option B (quick patch): join the running containers to one network
+
+Keeps the current containers; just attaches both to the shared `monitoring` network:
+
+```bash
+docker network connect monitoring prometheus
+docker network connect monitoring grafana
+```
+
+⚠️ This patch is lost the next time the containers are recreated. Option A is the durable fix
+and matches how this repo is meant to run.
+
+#### Verify the fix
+
+```bash
+# 1. DNS + connectivity from inside Grafana (the exact path that was failing):
+docker exec grafana wget -qO- http://prometheus:9090/-/healthy
+# Expected: Prometheus Server is Healthy.
+
+# 2. Datasource health straight from the Grafana API (no UI clicking):
+curl -s -u admin:admin \
+  http://localhost:3000/api/datasources/uid/PBFA97CFB590B2093/health
+# Expected: {"message":"Successfully queried the Prometheus API.","status":"OK"}
+```
+
+(The datasource UID `PBFA97CFB590B2093` is the one the `integration/`/`infra/` provisioning
+assigns to Prometheus. List your datasources with
+`curl -s -u admin:admin http://localhost:3000/api/datasources` if yours differs.)
 
 ---
 
@@ -1288,3 +1394,102 @@ After a full prune:
 ```bash
 docker run hello-world   # confirm Docker itself still works
 ```
+
+---
+
+## 17. ELK Stack issues
+
+These cover the `elk/` pillar (Elasticsearch + Logstash + Kibana + Filebeat). The metrics-side
+sections above (ports, networks, bind mounts) also apply — ELK is just more Docker containers.
+
+### Elasticsearch exits immediately — `vm.max_map_count [65530] is too low`
+
+**This is the #1 ELK failure.** Elasticsearch needs a Linux kernel setting raised.
+
+```
+ERROR: [1] bootstrap checks failed
+max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+```
+
+**Fix (Linux / WSL2):**
+```bash
+sudo sysctl -w vm.max_map_count=262144                              # this session
+echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-elasticsearch.conf   # permanent
+```
+On Docker Desktop (macOS/Windows) the setting lives in Docker's Linux VM; on Windows run the
+commands inside WSL2.
+
+### Elasticsearch is killed / `Cannot allocate memory`
+
+Not enough RAM for the JVM heap. Lower it in `elk/02-setup/docker-compose.yml`:
+```yaml
+- "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+```
+…or give Docker Desktop more memory (Settings → Resources). Elasticsearch needs ~1GB+ to be happy.
+
+### Cluster health is "yellow" — is that broken?
+
+**No.** On a single node, Elasticsearch can't place the replica (backup) copy of each index on a
+*different* node, so replicas stay unassigned and status is **yellow**. It's healthy and expected
+for this lab. **Red** means a primary shard is missing — check `docker logs elasticsearch`.
+
+### Kibana shows "Kibana server is not ready yet"
+
+Kibana is still starting (it takes ~1 minute) or can't reach Elasticsearch.
+```bash
+docker logs kibana | tail -20
+curl http://localhost:9200/_cluster/health?pretty   # is ES up first?
+```
+Make sure `ELASTICSEARCH_HOSTS=http://elasticsearch:9200` uses the **container name**, not `localhost`.
+
+### No data in Kibana Discover
+
+1. **Time range** — the picker (top-right) defaults to a narrow window. Set it to "Last 1 hour" and
+   generate fresh logs.
+2. **Data View** — you must create one matching the index (`flask-logs-*` or `web-access-*`) with
+   `@timestamp` as the time field.
+3. **Did logs actually arrive?** Check the index has documents:
+   ```bash
+   curl -s "http://localhost:9200/_cat/indices?v"
+   ```
+   If `docs.count` is 0, the problem is upstream (Filebeat/Logstash), not Kibana.
+
+### Filebeat won't start — config permission error
+
+```
+Exiting: error loading config file: config file ("filebeat.yml") must be owned by the user
+identifier (uid=0) or root
+```
+The bind-mounted config trips Filebeat's strict ownership check. The project compose files already
+run Filebeat with `--strict.perms=false` and `user: root` — make sure you didn't remove those.
+
+### Logs aren't reaching Elasticsearch
+
+Trace the pipeline hop by hop:
+```bash
+# 1. Is the app writing logs?
+docker exec <app-container> tail -n 3 /var/log/app/app.log      # or /var/log/web/access.log
+
+# 2. Is Filebeat shipping? (look for "established" connection)
+docker logs <filebeat-container> | tail -20
+
+# 3. (Project 2 only) Is Logstash parsing? (should print parsed docs)
+docker logs logstash | tail -20
+
+# 4. Did the index get created?
+curl -s "http://localhost:9200/_cat/indices?v"
+```
+The break is at the first step that looks wrong. Common cause: the project was started **before**
+`elk/02-setup/`, so the `elk` network/Logstash wasn't there — restart the project after the stack
+is healthy.
+
+### Logstash shows `_grokparsefailure` tags
+
+A log line didn't match the grok pattern in `elk/02-setup/config/pipeline/logstash.conf`. With the
+Project 2 generator this shouldn't happen; with your own logs it means the pattern needs adjusting.
+After editing the pipeline: `docker compose restart logstash` (it must reload the file).
+
+### `network elk not found`
+
+You started an ELK project before the stack. Start `elk/02-setup/` first (it creates the `elk`
+network), then the project. Same root cause as section 14 for the `monitoring` network.

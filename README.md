@@ -39,12 +39,23 @@ closer to how production systems work). Pick one and follow it consistently.
 │   ├── 02-job-processor/       # Background job queue — queue depth, throughput, failures
 │   └── 03-cache-service/       # In-memory cache — hit rate, key count, TTL evictions
 │
-└── projects-native/            # Native-only projects (run with python app.py)
-    ├── 04-system-monitor/      # Linux only · raw /proc — CPU, memory, disk I/O, load
-    ├── 05-url-health-checker/  # Any OS · polls URLs — availability and response time
-    ├── 06-mac-system-monitor/  # macOS · psutil — CPU, memory, network, battery
-    └── 07-linux-system-monitor/# Linux · psutil — the portable alternative to project 04
+├── projects-native/            # Native-only projects (run with python app.py)
+│   ├── 04-system-monitor/      # Linux only · raw /proc — CPU, memory, disk I/O, load
+│   ├── 05-url-health-checker/  # Any OS · polls URLs — availability and response time
+│   ├── 06-mac-system-monitor/  # macOS · psutil — CPU, memory, network, battery
+│   └── 07-linux-system-monitor/# Linux · psutil — the portable alternative to project 04
+│
+└── elk/                        # LOGS pillar: the ELK Stack (Elasticsearch + Logstash + Kibana)
+    ├── 01-fundamentals/        # What ELK is, architecture, Beats, config, ETL (read first)
+    ├── 02-setup/               # Install ELK with Docker (CLI-first, then Compose)
+    ├── 03-queries/             # Search your logs — KQL + Elasticsearch Query DSL
+    └── projects/               # 01-flask-json-logger · 02-web-access-log-analyzer
 ```
+
+> **Metrics vs logs:** everything above `elk/` is about **metrics** (Prometheus + Grafana —
+> *"is something wrong?"*). The **`elk/`** folder is a separate, self-contained pillar about
+> **logs** (*"why did it go wrong?"*). Start there once you're comfortable with the metrics side —
+> see [`elk/README.md`](elk/README.md).
 
 ---
 
@@ -141,6 +152,19 @@ Prometheus. Which ones apply depends on your OS (see `projects-native/README.md`
 In each `prometheus-setup/` and `grafana-setup/` directory, do `01-docker-cli.md` before
 `02-docker-compose.md` — the manual commands make the Compose file meaningful instead of magic.
 
+### ELK path (logs — a separate pillar)
+
+Independent of the metrics tracks above. Do this once you understand logs as a concept
+(see [`monitoring-fundamentals/02-monitoring-fundamentals/02-logs.md`](monitoring-fundamentals/02-monitoring-fundamentals/02-logs.md)):
+
+```
+1. elk/01-fundamentals/             ← what ELK is, architecture, Beats, config, ETL (read first)
+2. elk/02-setup/                    ← install Elasticsearch + Logstash + Kibana with Docker
+3. elk/projects/01-flask-json-logger/CONNECT.md        ← JSON logs → Filebeat → Elasticsearch
+4. elk/projects/02-web-access-log-analyzer/CONNECT.md  ← raw logs → Filebeat → Logstash → Elasticsearch
+5. elk/03-queries/                  ← search the logs you shipped (KQL + Query DSL)
+```
+
 ---
 
 ## Quick start — Docker path (projects 01–03)
@@ -179,6 +203,23 @@ curl -X POST http://localhost:9090/-/reload
 #    (macOS via brew services: brew services restart prometheus)
 
 # 4. Open Grafana at http://localhost:3000 → import the project's dashboard JSON
+```
+
+## Quick start — ELK / logs path
+
+```bash
+# 0. One-time: Elasticsearch needs this kernel setting or it crashes (Linux/WSL2)
+sudo sysctl -w vm.max_map_count=262144
+
+# 1. Start the ELK stack (Elasticsearch + Logstash + Kibana)
+cd elk/02-setup && docker compose up -d && cd ../..
+
+# 2. Start an ELK project (app + Filebeat sidecar)
+cd elk/projects/01-flask-json-logger && docker compose up -d --build && cd ../../..
+
+# 3. Generate logs, then open Kibana
+curl http://localhost:8091/order
+#    http://localhost:5601  → Discover → create a `flask-logs-*` data view
 ```
 
 ---
@@ -227,8 +268,13 @@ reference in each project would fail to find it.
 | URL Health Checker | 8085 | http://localhost:8085 | Native any OS (`projects-native/05-url-health-checker/`) |
 | Mac System Monitor | 8086 | http://localhost:8086 | Native macOS (`projects-native/06-mac-system-monitor/`) |
 | Linux System Monitor | 8087 | http://localhost:8087 | Native Linux (`projects-native/07-linux-system-monitor/`) |
+| Elasticsearch | 9200 | http://localhost:9200 | ELK Docker (`elk/02-setup/`) |
+| Kibana | 5601 | http://localhost:5601 | ELK Docker (`elk/02-setup/`) |
+| Logstash | 5044 / 9600 | http://localhost:9600 | ELK Docker (`elk/02-setup/`) |
+| Flask JSON Logger | 8091 | http://localhost:8091 | ELK Docker (`elk/projects/01-flask-json-logger/`) |
+| Web Access Log Analyzer | 8092 | http://localhost:8092 | ELK Docker (`elk/projects/02-web-access-log-analyzer/`) |
 
-**Grafana login:** `admin` / `admin`
+**Grafana login:** `admin` / `admin` · **Kibana / Elasticsearch:** no login (security off — local lab only)
 
 ---
 
@@ -263,6 +309,13 @@ To import a dashboard: Grafana → Dashboards → New → Import → upload the 
 | **Docker network** | Virtual bridge allowing containers to reach each other by service name |
 | **external: true** | Joins a Docker network that already exists (created by another Compose project) |
 | **Provisioning** | Grafana loading data sources and dashboards from config files on startup |
+| **ELK Stack** | Elasticsearch + Logstash + Kibana — the logs counterpart to Prometheus + Grafana |
+| **Elasticsearch** | Stores logs as JSON documents and searches them instantly (inverted index) |
+| **Logstash** | Collects, parses, and forwards logs — the ETL step (input → filter → output) |
+| **Kibana** | Web UI to search logs and build dashboards (Elasticsearch's front-end) |
+| **Filebeat** | A lightweight agent that tails log files and ships them into ELK |
+| **ETL** | Extract → Transform → Load — what Logstash does to raw log lines |
+| **KQL** | Kibana Query Language — the search syntax in Kibana's Discover view |
 
 ---
 

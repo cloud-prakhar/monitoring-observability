@@ -81,6 +81,15 @@ docker network ls
 ```
 You should see `monitoring` in the list with driver `bridge`.
 
+> **Naming note:** Because we created this network **by hand**, it is named exactly
+> `monitoring`. When Docker **Compose** creates a network (next file, `02-docker-compose.md`)
+> it prefixes the name with the project/directory — e.g. `integration_monitoring`. Same kind of
+> network, different name; both work the same way once your containers are attached to it.
+>
+> **`bridge` driver:** the default network type for containers on a single host. It creates a
+> private virtual switch on your machine; every container attached to it gets an internal IP and
+> can reach the others by name via Docker's built-in DNS.
+
 ---
 
 ## Step 2 — Create named volumes

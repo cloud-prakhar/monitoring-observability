@@ -149,8 +149,37 @@ network. The `networks: - monitoring` under each service is what attaches them t
 Without both, containers would run in isolation and Grafana's data source URL
 (`http://prometheus:9090`) would fail to resolve.
 
+### Why the network is called `integration_monitoring`, not just `monitoring`
+
+Look at the `up` output above: the network is named **`integration_monitoring`**, not
+`monitoring`. Compose prefixes every network (and volume) it creates with the **project name**,
+which defaults to the directory the compose file lives in:
+
+```
+integration_monitoring
+        │        └── the `monitoring` name from the `networks:` block
+        └── the project name = this directory (integration/)
+```
+
+This is also why running the standalone `../prometheus-setup/` and `../grafana-setup/` stacks
+separately can't talk to each other: neither of those compose files defines a `networks:`
+block, so Compose falls back to creating a network named `<project>_default` for each —
+`prometheus-setup_default` and `grafana-setup_default`. Two different networks, no shared DNS,
+so `http://prometheus:9090` from Grafana fails with
+`lookup prometheus ... server misbehaving`. The fix is to run both from a single compose file
+that defines a shared network — exactly what this `integration/` setup does. (Full write-up:
+[../docs/troubleshooting.md → section 4](../docs/troubleshooting.md#4-grafana-cannot-reach-prometheus--the-localhost-trap).)
+
 ---
 
-**Next step:** Head to **`../infra/`** to start the shared monitoring stack, then pick a
-project from `projects/` (Docker) or `projects-native/` (native WSL2) to build a real
-application that exposes custom metrics and dashboards.
+**Next step:** First **tear this stack down** — it shares the container names `prometheus`
+and `grafana` with `infra/`, so leaving it running makes the next `docker compose up -d`
+fail with `Conflict. The container name "/prometheus" is already in use`:
+
+```bash
+docker compose down          # from integration/
+```
+
+Then head to **`../infra/`** to start the shared monitoring stack, then pick a project from
+`projects/` (Docker) or `projects-native/` (native WSL2) to build a real application that
+exposes custom metrics and dashboards.

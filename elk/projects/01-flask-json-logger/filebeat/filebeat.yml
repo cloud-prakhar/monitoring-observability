@@ -1,0 +1,32 @@
+# filebeat.yml — ELK Project 1 (Flask JSON Logger)
+#
+# This tells Filebeat WHAT to read (the app's JSON log file) and WHERE to send it
+# (straight to Elasticsearch — no Logstash, because the logs are already clean JSON).
+#
+# Path A:  app.log  ──Filebeat──▶  Elasticsearch
+
+filebeat.inputs:
+  - type: filestream            # tail a continuously-growing file
+    id: flask-json-logs
+    paths:
+      - /var/log/app/*.log      # the shared volume the Flask app writes to
+    parsers:
+      - ndjson:                 # each line is a JSON object — decode it into real fields
+          target: ""            # put the decoded keys at the top level of the document
+          overwrite_keys: true  # let the log's own @timestamp/level win over Filebeat defaults
+          add_error_key: true   # if a line isn't valid JSON, record an error field instead of crashing
+
+# ---- OUTPUT: send directly to Elasticsearch (Path A — skip Logstash) ----
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "flask-logs-%{+yyyy.MM.dd}"   # one index per day, e.g. flask-logs-2024.10.10
+
+# Custom index names require turning off ILM (index lifecycle management) and pointing
+# Filebeat at a matching index template.
+setup.ilm.enabled: false
+setup.template.name: "flask-logs"
+setup.template.pattern: "flask-logs-*"
+
+# Quieter startup; we don't need Filebeat's own dashboards for this lab.
+setup.dashboards.enabled: false
+logging.level: info

@@ -68,7 +68,9 @@ FATAL   → Critical failures causing application exit
 | **Splunk** | Enterprise log management + SIEM |
 | **CloudWatch Logs** | AWS-native log aggregation |
 
-This repo focuses on metrics (Prometheus). For logs, see the [Loki getting started guide](https://grafana.com/docs/loki/latest/get-started/).
+Want to get hands-on with logs in this repo? See the **[ELK Stack lab](../../elk/README.md)** —
+Elasticsearch + Logstash + Kibana + Filebeat, with two runnable projects that ship real logs.
+For a label-based alternative, see the [Loki getting started guide](https://grafana.com/docs/loki/latest/get-started/).
 
 ---
 
